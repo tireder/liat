@@ -23,10 +23,12 @@ export default function PhoneStep({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const supabase = supabaseUrl && supabaseAnonKey
+        ? createBrowserClient(supabaseUrl, supabaseAnonKey)
+        : null;
 
     // Format phone for E.164 (Israeli format)
     function formatPhoneE164(phoneNumber: string): string {
@@ -41,6 +43,10 @@ export default function PhoneStep({
     }
 
     async function sendOtp() {
+        if (!supabase) {
+            setError("שגיאה בהתחברות");
+            return;
+        }
         setError("");
         setLoading(true);
 
@@ -64,6 +70,10 @@ export default function PhoneStep({
     }
 
     async function verifyOtp() {
+        if (!supabase) {
+            setError("שגיאה בהתחברות");
+            return;
+        }
         setError("");
         setLoading(true);
 

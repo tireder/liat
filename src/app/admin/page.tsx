@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
 import {
     CalendarIcon, ClockIcon, CheckIcon, XIcon,
-    NailPolishIcon, HomeIcon, SettingsIcon, LogoutIcon, EditIcon, TrashIcon, PlusIcon, BookIcon, UsersIcon
+    NailPolishIcon, HomeIcon, SettingsIcon, LogoutIcon, EditIcon, TrashIcon, PlusIcon, BookIcon, ImageIcon
 } from "@/components/icons";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 import styles from "./page.module.css";
@@ -68,19 +68,25 @@ export default function AdminDashboard() {
 
 function AdminContent() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<"dashboard" | "bookings" | "services" | "courses" | "settings">("dashboard");
+    const [activeTab, setActiveTab] = useState<"dashboard" | "bookings" | "services" | "courses" | "gallery" | "settings">("dashboard");
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [authChecked, setAuthChecked] = useState(false);
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const supabase = supabaseUrl && supabaseAnonKey
+        ? createBrowserClient(supabaseUrl, supabaseAnonKey)
+        : null;
 
     // Check authentication on mount
     useEffect(() => {
         async function checkAuth() {
+            if (!supabase) {
+                router.replace("/admin-login");
+                return;
+            }
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
                 router.replace("/admin-login");
@@ -89,10 +95,12 @@ function AdminContent() {
             }
         }
         checkAuth();
-    }, [router, supabase.auth]);
+    }, [router, supabase]);
 
     async function handleLogout() {
-        await supabase.auth.signOut();
+        if (supabase) {
+            await supabase.auth.signOut();
+        }
         router.replace("/admin-login");
     }
 
@@ -271,6 +279,7 @@ function AdminContent() {
                 {activeTab === "bookings" && <BookingsView />}
                 {activeTab === "services" && <ServicesView />}
                 {activeTab === "courses" && <CoursesView />}
+                {activeTab === "gallery" && <GalleryView />}
                 {activeTab === "settings" && <SettingsView />}
             </main>
 
@@ -303,6 +312,13 @@ function AdminContent() {
                 >
                     <BookIcon size={22} />
                     <span>קורסים</span>
+                </button>
+                <button
+                    className={`${styles.navItem} ${activeTab === "gallery" ? styles.active : ""}`}
+                    onClick={() => setActiveTab("gallery")}
+                >
+                    <ImageIcon size={22} />
+                    <span>גלריה</span>
                 </button>
                 <button
                     className={`${styles.navItem} ${activeTab === "settings" ? styles.active : ""}`}
@@ -1297,6 +1313,157 @@ function CoursesView() {
                             </div>
                         </form>
                     </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Gallery View Component
+interface GalleryImage {
+    id: string;
+    url: string;
+    alt: string | null;
+    sort_order: number;
+    active: boolean;
+}
+
+function GalleryView() {
+    const { showToast } = useToast();
+    const [images, setImages] = useState<GalleryImage[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
+
+    const fetchImages = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/gallery");
+            if (res.ok) {
+                const data = await res.json();
+                setImages(data);
+            }
+        } catch (error) {
+            console.error("Error fetching images:", error);
+            showToast("שגיאה בטעינת התמונות", "error");
+        }
+        setLoading(false);
+    }, [showToast]);
+
+    useEffect(() => {
+        fetchImages();
+    }, [fetchImages]);
+
+    async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setUploading(true);
+        try {
+            for (const file of Array.from(files)) {
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("alt", file.name.split(".")[0]);
+
+                const res = await fetch("/api/admin/gallery", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || "Upload failed");
+                }
+            }
+            showToast("התמונות הועלו בהצלחה", "success");
+            fetchImages();
+        } catch (error) {
+            console.error("Error uploading:", error);
+            showToast("שגיאה בהעלאת תמונות", "error");
+        }
+        setUploading(false);
+        e.target.value = "";
+    }
+
+    async function toggleActive(image: GalleryImage) {
+        try {
+            const res = await fetch("/api/admin/gallery", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: image.id, active: !image.active }),
+            });
+            if (res.ok) {
+                showToast(image.active ? "התמונה הוסתרה" : "התמונה מוצגת", "success");
+                fetchImages();
+            }
+        } catch (error) {
+            console.error("Error toggling image:", error);
+            showToast("שגיאה בעדכון", "error");
+        }
+    }
+
+    async function deleteImage(image: GalleryImage) {
+        if (!confirm("האם למחוק את התמונה?")) return;
+        try {
+            const res = await fetch(`/api/admin/gallery?id=${image.id}`, {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                showToast("התמונה נמחקה", "success");
+                fetchImages();
+            } else {
+                const error = await res.json();
+                showToast(error.error || "שגיאה במחיקה", "error");
+            }
+        } catch (error) {
+            console.error("Error deleting image:", error);
+            showToast("שגיאה במחיקה", "error");
+        }
+    }
+
+    return (
+        <div className={styles.viewContainer}>
+            <div className={styles.viewHeader}>
+                <h2>גלריה</h2>
+                <label className="btn btn-primary" style={{ padding: "0.625rem 1rem", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                    <PlusIcon size={16} />
+                    {uploading ? "מעלה..." : "העלאת תמונות"}
+                    <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleUpload}
+                        disabled={uploading}
+                        style={{ display: "none" }}
+                    />
+                </label>
+            </div>
+
+            {loading ? (
+                <div className={styles.loading}>טוען תמונות...</div>
+            ) : images.length === 0 ? (
+                <p style={{ color: "var(--foreground-muted)", textAlign: "center", padding: "2rem" }}>
+                    אין תמונות בגלריה. לחצי על &quot;העלאת תמונות&quot; כדי להוסיף.
+                </p>
+            ) : (
+                <div className={styles.galleryGrid}>
+                    {images.map((image) => (
+                        <div key={image.id} className={styles.galleryCard} data-inactive={!image.active}>
+                            <img src={image.url} alt={image.alt || "תמונה"} className={styles.galleryImage} />
+                            <div className={styles.galleryActions}>
+                                <label className={styles.toggle}>
+                                    <input
+                                        type="checkbox"
+                                        checked={image.active}
+                                        onChange={() => toggleActive(image)}
+                                    />
+                                    <span className={styles.toggleSlider} />
+                                </label>
+                                <button className={styles.deleteBtn} onClick={() => deleteImage(image)}>
+                                    <TrashIcon size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

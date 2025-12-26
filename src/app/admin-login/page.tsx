@@ -13,13 +13,21 @@ export default function AdminLogin() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const supabase = supabaseUrl && supabaseAnonKey
+        ? createBrowserClient(supabaseUrl, supabaseAnonKey)
+        : null;
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+
+        if (!supabase) {
+            setError("שגיאה בהתחברות");
+            return;
+        }
+
         setError("");
         setLoading(true);
 
