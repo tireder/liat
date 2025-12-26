@@ -6,7 +6,7 @@
 - Environments: .env
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 2.1s
+Γ£ô Compiled successfully in 1565.0ms
   Running TypeScript ...
   Collecting page data using 27 workers ...
   Generating static pages using 27 workers (0/33) ...
@@ -33,7 +33,7 @@ char:5
     at stringify (<anonymous>)
   Generating static pages using 27 workers (16/33) 
   Generating static pages using 27 workers (24/33) 
-Γ£ô Generating static pages using 27 workers (33/33) in 228.0ms
+Γ£ô Generating static pages using 27 workers (33/33) in 195.2ms
   Finalizing page optimization ...
 
 Route (app)
