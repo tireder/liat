@@ -17,16 +17,19 @@ ALTER TABLE bookings
 ADD COLUMN IF NOT EXISTS reminder_sent TIMESTAMPTZ;
 
 -- ============================================
--- 3. Add sms_sender setting (optional)
+-- 3. Settings: Business name vs SMS Sender
 -- ============================================
--- Insert sms_sender setting if you want different sender name
--- Replace 'YourSenderName' with your SMS4Free verified sender
-INSERT INTO settings (key, value) 
-VALUES ('sms_sender', 'YourSenderName')
-ON CONFLICT (key) DO NOTHING;
+-- business_name = Displayed in messages, website, calendar
+-- sms_sender = Only for SMS4Free API sender field
+
+-- Update these with your actual values:
+INSERT INTO settings (key, value) VALUES 
+    ('business_name', 'ליאת'),  -- Hebrew name shown in messages
+    ('sms_sender', 'Liat')      -- SMS4Free verified sender (English)
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- ============================================
--- 4. Add hero/about settings (if not exists)
+-- 4. Hero/About settings
 -- ============================================
 INSERT INTO settings (key, value) VALUES 
     ('hero_title', 'יופי בקצות האצבעות'),
@@ -39,7 +42,6 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 
 -- ============================================
--- Done! Check results:
+-- Verify settings:
 -- ============================================
 SELECT * FROM settings ORDER BY key;
-SELECT * FROM alive;
