@@ -744,6 +744,8 @@ function SettingsView() {
         facebook: "",
         tiktok: "",
         whatsapp: "",
+        otp_method: "sms4free" as "supabase" | "sms4free",
+        business_name: "ליאת",
     });
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -768,6 +770,8 @@ function SettingsView() {
                             facebook: data.settings.facebook || "",
                             tiktok: data.settings.tiktok || "",
                             whatsapp: data.settings.whatsapp || "",
+                            otp_method: data.settings.otp_method || "sms4free",
+                            business_name: data.settings.business_name || "ליאת",
                         }));
                     }
                     if (data.operatingHours && data.operatingHours.length > 0) {
@@ -964,6 +968,37 @@ function SettingsView() {
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* OTP / SMS Settings */}
+                    <div className={styles.settingsSection}>
+                        <h3 className={styles.settingsSectionTitle}>הגדרות SMS</h3>
+                        <div className={styles.settingsField}>
+                            <label>שם העסק (לשליחת SMS)</label>
+                            <input
+                                type="text"
+                                value={settings.business_name}
+                                onChange={(e) => setSettings(prev => ({ ...prev, business_name: e.target.value }))}
+                                className={styles.textInput}
+                                placeholder="ליאת"
+                            />
+                        </div>
+                        <div className={styles.settingsField}>
+                            <label>שיטת אימות OTP</label>
+                            <select
+                                value={settings.otp_method}
+                                onChange={(e) => setSettings(prev => ({ ...prev, otp_method: e.target.value as "supabase" | "sms4free" }))}
+                                className={styles.selectInput}
+                            >
+                                <option value="sms4free">SMS4Free (מומלץ)</option>
+                                <option value="supabase">Supabase Auth</option>
+                            </select>
+                            <span className={styles.fieldHint}>
+                                {settings.otp_method === "sms4free"
+                                    ? "שליחת SMS דרך SMS4Free.co.il"
+                                    : "שימוש ב-Supabase Auth לאימות OTP"}
+                            </span>
+                        </div>
                     </div>
 
                     {/* Policy Settings */}

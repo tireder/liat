@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createBrowserClient } from "@supabase/ssr";
 import { BookingData } from "@/app/book/page";
 import { PhoneIcon, CheckIcon } from "@/components/icons";
 import styles from "./PhoneStep.module.css";
@@ -21,24 +22,78 @@ export default function PhoneStep({
     const [step, setStep] = useState<"phone" | "otp" | "verified">("phone");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [otpMethod, setOtpMethod] = useState<"supabase" | "sms4free">("sms4free");
+
+    // Supabase client for supabase auth method
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabase = supabaseUrl && supabaseAnonKey
+        ? createBrowserClient(supabaseUrl, supabaseAnonKey)
+        : null;
+
+    // Fetch OTP method from settings
+    useEffect(() => {
+        async function fetchSettings() {
+            try {
+                const res = await fetch("/api/settings");
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.otp_method) {
+                        setOtpMethod(data.otp_method);
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching settings:", err);
+            }
+        }
+        fetchSettings();
+    }, []);
+
+    // Format phone for E.164 (Israeli format)
+    function formatPhoneE164(phoneNumber: string): string {
+        const cleaned = phoneNumber.replace(/\D/g, "");
+        if (cleaned.startsWith("0")) {
+            return "+972" + cleaned.slice(1);
+        }
+        if (cleaned.startsWith("972")) {
+            return "+" + cleaned;
+        }
+        return "+972" + cleaned;
+    }
 
     async function sendOtp() {
         setError("");
         setLoading(true);
 
         try {
-            const res = await fetch("/api/otp/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone }),
-            });
+            if (otpMethod === "supabase" && supabase) {
+                // Use Supabase Auth
+                const formattedPhone = formatPhoneE164(phone);
+                const { error: otpError } = await supabase.auth.signInWithOtp({
+                    phone: formattedPhone,
+                });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.error || "שגיאה בשליחת הקוד. נסי שוב.");
+                if (otpError) {
+                    setError("שגיאה בשליחת הקוד. נסי שוב.");
+                    console.error("OTP Error:", otpError);
+                } else {
+                    setStep("otp");
+                }
             } else {
-                setStep("otp");
+                // Use SMS4Free custom API
+                const res = await fetch("/api/otp/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    setError(data.error || "שגיאה בשליחת הקוד. נסי שוב.");
+                } else {
+                    setStep("otp");
+                }
             }
         } catch {
             setError("שגיאה בשליחת הקוד");
@@ -52,23 +107,44 @@ export default function PhoneStep({
         setLoading(true);
 
         try {
-            const res = await fetch("/api/otp/verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone, code: otp }),
-            });
+            if (otpMethod === "supabase" && supabase) {
+                // Use Supabase Auth
+                const formattedPhone = formatPhoneE164(phone);
+                const { error: verifyError } = await supabase.auth.verifyOtp({
+                    phone: formattedPhone,
+                    token: otp,
+                    type: "sms",
+                });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.error || "קוד שגוי. נסי שוב.");
+                if (verifyError) {
+                    setError("קוד שגוי. נסי שוב.");
+                    console.error("Verify Error:", verifyError);
+                } else {
+                    updateBookingData({ phone, name: phone });
+                    setStep("verified");
+                    setTimeout(() => {
+                        onNext();
+                    }, 1000);
+                }
             } else {
-                updateBookingData({ phone, name: phone });
-                setStep("verified");
-                // Wait a moment then proceed
-                setTimeout(() => {
-                    onNext();
-                }, 1000);
+                // Use SMS4Free custom API
+                const res = await fetch("/api/otp/verify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone, code: otp }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    setError(data.error || "קוד שגוי. נסי שוב.");
+                } else {
+                    updateBookingData({ phone, name: phone });
+                    setStep("verified");
+                    setTimeout(() => {
+                        onNext();
+                    }, 1000);
+                }
             }
         } catch {
             setError("שגיאה באימות הקוד");
