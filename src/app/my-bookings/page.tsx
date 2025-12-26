@@ -404,6 +404,13 @@ export default function MyBookingsPage() {
                                                     </span>
                                                 </div>
                                             </div>
+                                            <div className={styles.bookingStatus}>
+                                                <span className={`${styles.statusBadge} ${booking.status === "confirmed" ? styles.confirmed : styles.pending}`}>
+                                                    {booking.status === "confirmed" && "מאושר ✓"}
+                                                    {booking.status === "pending" && "ממתין לאישור"}
+                                                    {booking.status === "pending_change" && "ממתין לשינוי"}
+                                                </span>
+                                            </div>
                                             <div className={styles.bookingActions}>
                                                 {canCancel(booking) ? (
                                                     <button
