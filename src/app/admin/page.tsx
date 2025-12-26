@@ -740,6 +740,10 @@ function SettingsView() {
         buffer_minutes: "15",
         phone: "050-123-4567",
         address: "רחוב הרצל 50, תל אביב",
+        instagram: "",
+        facebook: "",
+        tiktok: "",
+        whatsapp: "",
     });
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -760,6 +764,10 @@ function SettingsView() {
                             buffer_minutes: data.settings.buffer_minutes || prev.buffer_minutes,
                             phone: data.settings.phone || prev.phone,
                             address: data.settings.address || prev.address,
+                            instagram: data.settings.instagram || "",
+                            facebook: data.settings.facebook || "",
+                            tiktok: data.settings.tiktok || "",
+                            whatsapp: data.settings.whatsapp || "",
                         }));
                     }
                     if (data.operatingHours && data.operatingHours.length > 0) {
@@ -999,6 +1007,55 @@ function SettingsView() {
                                 type="text"
                                 value={settings.address}
                                 onChange={(e) => setSettings(prev => ({ ...prev, address: e.target.value }))}
+                                className={styles.textInput}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Social Links */}
+                    <div className={styles.settingsSection}>
+                        <h3 className={styles.settingsSectionTitle}>רשתות חברתיות</h3>
+                        <div className={styles.settingsField}>
+                            <label>Instagram</label>
+                            <input
+                                type="url"
+                                value={settings.instagram}
+                                onChange={(e) => setSettings(prev => ({ ...prev, instagram: e.target.value }))}
+                                placeholder="https://instagram.com/your_handle"
+                                dir="ltr"
+                                className={styles.textInput}
+                            />
+                        </div>
+                        <div className={styles.settingsField}>
+                            <label>Facebook</label>
+                            <input
+                                type="url"
+                                value={settings.facebook}
+                                onChange={(e) => setSettings(prev => ({ ...prev, facebook: e.target.value }))}
+                                placeholder="https://facebook.com/your_page"
+                                dir="ltr"
+                                className={styles.textInput}
+                            />
+                        </div>
+                        <div className={styles.settingsField}>
+                            <label>TikTok</label>
+                            <input
+                                type="url"
+                                value={settings.tiktok}
+                                onChange={(e) => setSettings(prev => ({ ...prev, tiktok: e.target.value }))}
+                                placeholder="https://tiktok.com/@your_handle"
+                                dir="ltr"
+                                className={styles.textInput}
+                            />
+                        </div>
+                        <div className={styles.settingsField}>
+                            <label>WhatsApp</label>
+                            <input
+                                type="tel"
+                                value={settings.whatsapp}
+                                onChange={(e) => setSettings(prev => ({ ...prev, whatsapp: e.target.value }))}
+                                placeholder="+972501234567"
+                                dir="ltr"
                                 className={styles.textInput}
                             />
                         </div>
