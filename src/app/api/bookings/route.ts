@@ -47,13 +47,14 @@ async function sendBookingNotifications(
 
         const dateFormatted = formatDateHebrew(booking.date);
         const clientPhone = formatPhone(booking.client.phone);
+        const clientName = booking.client.name || clientPhone;
 
         // Send notification to artist
         if (artistPhone) {
             const artistMsg = `תור חדש! 📅
 ${booking.service.name}
 ${dateFormatted} בשעה ${booking.start_time}
-לקוחה: ${clientPhone}`;
+${clientName} - ${clientPhone}`;
 
             await sendSms({
                 sender: businessName,
@@ -63,7 +64,7 @@ ${dateFormatted} בשעה ${booking.start_time}
         }
 
         // Send confirmation to customer
-        const customerMsg = `שלום! 💅
+        const customerMsg = `שלום ${clientName}! 💅
 התור שלך אושר:
 ${booking.service.name}
 ${dateFormatted} בשעה ${booking.start_time}
@@ -72,6 +73,7 @@ ${dateFormatted} בשעה ${booking.start_time}
 
 ${businessName}`;
 
+        console.log("Sending customer SMS to:", clientPhone);
         await sendSms({
             sender: businessName,
             recipients: clientPhone,
