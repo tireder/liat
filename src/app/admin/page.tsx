@@ -754,6 +754,7 @@ function SettingsView() {
         whatsapp: "",
         otp_method: "sms4free" as "supabase" | "sms4free",
         business_name: "ליאת",
+        sms_sender: "",
         // Hero section
         hero_title: "יופי בקצות האצבעות",
         hero_subtitle: "טיפולי ציפורניים מקצועיים בסביבה אינטימית ומפנקת. כל ביקור הוא חוויה.",
@@ -789,6 +790,7 @@ function SettingsView() {
                             whatsapp: data.settings.whatsapp || "",
                             otp_method: data.settings.otp_method || "sms4free",
                             business_name: data.settings.business_name || "ליאת",
+                            sms_sender: data.settings.sms_sender || "",
                             // Hero section
                             hero_title: data.settings.hero_title || prev.hero_title,
                             hero_subtitle: data.settings.hero_subtitle || prev.hero_subtitle,
@@ -1000,7 +1002,7 @@ function SettingsView() {
                     <div className={styles.settingsSection}>
                         <h3 className={styles.settingsSectionTitle}>הגדרות SMS</h3>
                         <div className={styles.settingsField}>
-                            <label>שם העסק (לשליחת SMS)</label>
+                            <label>שם העסק (מוצג בהודעות ובאתר)</label>
                             <input
                                 type="text"
                                 value={settings.business_name}
@@ -1008,6 +1010,18 @@ function SettingsView() {
                                 className={styles.textInput}
                                 placeholder="ליאת"
                             />
+                            <span className={styles.fieldHint}>השם שמוצג בהודעות SMS, ביומן ובאתר</span>
+                        </div>
+                        <div className={styles.settingsField}>
+                            <label>שם שולח SMS (SMS4Free)</label>
+                            <input
+                                type="text"
+                                value={settings.sms_sender}
+                                onChange={(e) => setSettings(prev => ({ ...prev, sms_sender: e.target.value }))}
+                                className={styles.textInput}
+                                placeholder="Liat"
+                            />
+                            <span className={styles.fieldHint}>שם השולח המאושר ב-SMS4Free (באנגלית, עד 11 תווים)</span>
                         </div>
                         <div className={styles.settingsField}>
                             <label>שיטת אימות OTP</label>
