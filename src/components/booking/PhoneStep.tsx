@@ -33,6 +33,8 @@ export default function PhoneStep({
 
     // Check for existing session on mount
     useEffect(() => {
+        let mounted = true;
+
         async function checkSession() {
             try {
                 const savedSession = localStorage.getItem("liart_session");
@@ -40,13 +42,15 @@ export default function PhoneStep({
                     const session = JSON.parse(savedSession);
                     // Check if session is still valid (7 days)
                     if (session.expires > Date.now()) {
+                        if (!mounted) return;
                         setPhone(session.phone);
                         updateBookingData({ phone: session.phone, name: session.phone });
                         setStep("verified");
                         setLoading(false);
+                        // Give parent component time to update before moving to next step
                         setTimeout(() => {
-                            onNext();
-                        }, 500);
+                            if (mounted) onNext();
+                        }, 800);
                         return;
                     } else {
                         localStorage.removeItem("liart_session");
@@ -55,10 +59,13 @@ export default function PhoneStep({
             } catch {
                 localStorage.removeItem("liart_session");
             }
-            setLoading(false);
+            if (mounted) setLoading(false);
         }
         checkSession();
-    }, [updateBookingData, onNext]);
+
+        return () => { mounted = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Run only once on mount
 
     // Fetch OTP method from settings
     useEffect(() => {
