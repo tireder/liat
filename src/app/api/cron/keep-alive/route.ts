@@ -1,8 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
 // GET /api/cron/keep-alive - Cron job to keep Supabase active
-export async function GET() {
+export async function GET(request: NextRequest) {
+    // Verify cron secret (Vercel sends this automatically)
+    const authHeader = request.headers.get("authorization");
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     try {
         const supabase = createAdminClient();
         const now = new Date().toISOString();

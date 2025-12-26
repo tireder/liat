@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendSms } from "@/lib/sms4free";
 
@@ -29,7 +29,13 @@ interface BookingWithRelations {
 }
 
 // GET /api/cron/reminders - Send reminder SMS 24h before appointments
-export async function GET() {
+export async function GET(request: NextRequest) {
+    // Verify cron secret (Vercel sends this automatically)
+    const authHeader = request.headers.get("authorization");
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     try {
         const supabase = createAdminClient();
         const now = new Date();

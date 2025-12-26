@@ -6,7 +6,7 @@
 - Environments: .env
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 1517.5ms
+Γ£ô Compiled successfully in 1322.9ms
   Running TypeScript ...
   Collecting page data using 27 workers ...
   Generating static pages using 27 workers (0/35) ...
@@ -21,9 +21,9 @@ char:5
 "$basedir/node_modules/npm/bin/npm-cli.js" $args
 +     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (Error fet 
-   ching ...min credentials:String) [], RemoteExcepti  
-  on
+    + CategoryInfo          : NotSpecified: (Error 
+fetching ..    .min credentials:String) [], 
+RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  
     at <unknown> (D:\Projects\Liart\.next\server\chunks
@@ -33,7 +33,7 @@ char:5
     at cv (D:\Projects\Liart\.next\server\chunks\ssr\_d
 2890a94._.js:58:47311)
     at stringify (<anonymous>)
-Γ£ô Generating static pages using 27 workers (35/35) in 212.5ms
+Γ£ô Generating static pages using 27 workers (35/35) in 184.8ms
   Finalizing page optimization ...
 
 Route (app)
