@@ -29,11 +29,46 @@ export default function MyBookingsPage() {
     const [otp, setOtp] = useState("");
     const [name, setName] = useState("");
     const [step, setStep] = useState<"phone" | "otp" | "name" | "bookings">("phone");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true); // Start as loading to check session
     const [error, setError] = useState("");
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
     const [cancelHoursBefore, setCancelHoursBefore] = useState(24);
+
+    // Check for existing session on mount
+    useEffect(() => {
+        async function checkSession() {
+            try {
+                const savedSession = localStorage.getItem("liart_session");
+                if (savedSession) {
+                    const session = JSON.parse(savedSession);
+                    // Check if session is still valid (7 days)
+                    if (session.expires > Date.now()) {
+                        const clientRes = await fetch(`/api/bookings/my?phone=${encodeURIComponent(session.phone)}`);
+                        if (clientRes.ok) {
+                            const clientData = await clientRes.json();
+                            if (clientData.client) {
+                                setPhone(session.phone);
+                                setClientInfo(clientData.client);
+                                setBookings(clientData.bookings || []);
+                                setStep("bookings");
+                                setLoading(false);
+                                return;
+                            }
+                        }
+                    } else {
+                        // Session expired, clear it
+                        localStorage.removeItem("liart_session");
+                    }
+                }
+            } catch {
+                // Session invalid, continue to login
+                localStorage.removeItem("liart_session");
+            }
+            setLoading(false);
+        }
+        checkSession();
+    }, []);
 
     // Fetch settings
     useEffect(() => {
@@ -94,6 +129,13 @@ export default function MyBookingsPage() {
             if (!res.ok) {
                 setError(data.error || "קוד שגוי");
             } else {
+                // Save session to localStorage (7 days)
+                const session = {
+                    phone,
+                    expires: Date.now() + (7 * 24 * 60 * 60 * 1000),
+                };
+                localStorage.setItem("liart_session", JSON.stringify(session));
+
                 // Check if client exists and has a name
                 const clientRes = await fetch(`/api/bookings/my?phone=${encodeURIComponent(phone)}`);
                 const clientData = await clientRes.json();
@@ -211,7 +253,13 @@ export default function MyBookingsPage() {
             </header>
 
             <main className={styles.content}>
-                {step === "phone" && (
+                {loading && step === "phone" && (
+                    <div className={styles.authCard}>
+                        <p>בודק הרשאות...</p>
+                    </div>
+                )}
+
+                {!loading && step === "phone" && (
                     <div className={styles.authCard}>
                         <div className={styles.authIcon}>
                             <PhoneIcon size={32} color="var(--color-primary)" />

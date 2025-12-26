@@ -20,7 +20,7 @@ export default function PhoneStep({
     const [phone, setPhone] = useState(bookingData.phone || "");
     const [otp, setOtp] = useState("");
     const [step, setStep] = useState<"phone" | "otp" | "verified">("phone");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true); // Start loading to check session
     const [error, setError] = useState("");
     const [otpMethod, setOtpMethod] = useState<"supabase" | "sms4free">("sms4free");
 
@@ -30,6 +30,35 @@ export default function PhoneStep({
     const supabase = supabaseUrl && supabaseAnonKey
         ? createBrowserClient(supabaseUrl, supabaseAnonKey)
         : null;
+
+    // Check for existing session on mount
+    useEffect(() => {
+        async function checkSession() {
+            try {
+                const savedSession = localStorage.getItem("liart_session");
+                if (savedSession) {
+                    const session = JSON.parse(savedSession);
+                    // Check if session is still valid (7 days)
+                    if (session.expires > Date.now()) {
+                        setPhone(session.phone);
+                        updateBookingData({ phone: session.phone, name: session.phone });
+                        setStep("verified");
+                        setLoading(false);
+                        setTimeout(() => {
+                            onNext();
+                        }, 500);
+                        return;
+                    } else {
+                        localStorage.removeItem("liart_session");
+                    }
+                }
+            } catch {
+                localStorage.removeItem("liart_session");
+            }
+            setLoading(false);
+        }
+        checkSession();
+    }, [updateBookingData, onNext]);
 
     // Fetch OTP method from settings
     useEffect(() => {
@@ -120,6 +149,10 @@ export default function PhoneStep({
                     setError("קוד שגוי. נסי שוב.");
                     console.error("Verify Error:", verifyError);
                 } else {
+                    // Save session to localStorage (7 days)
+                    const session = { phone, expires: Date.now() + (7 * 24 * 60 * 60 * 1000) };
+                    localStorage.setItem("liart_session", JSON.stringify(session));
+
                     updateBookingData({ phone, name: phone });
                     setStep("verified");
                     setTimeout(() => {
@@ -139,6 +172,10 @@ export default function PhoneStep({
                 if (!res.ok) {
                     setError(data.error || "קוד שגוי. נסי שוב.");
                 } else {
+                    // Save session to localStorage (7 days)
+                    const session = { phone, expires: Date.now() + (7 * 24 * 60 * 60 * 1000) };
+                    localStorage.setItem("liart_session", JSON.stringify(session));
+
                     updateBookingData({ phone, name: phone });
                     setStep("verified");
                     setTimeout(() => {
@@ -167,7 +204,13 @@ export default function PhoneStep({
                 </p>
             </div>
 
-            {step === "phone" && (
+            {loading && step === "phone" && (
+                <div className={styles.form}>
+                    <p style={{ textAlign: "center", color: "var(--foreground-muted)" }}>בודק הרשאות...</p>
+                </div>
+            )}
+
+            {!loading && step === "phone" && (
                 <div className={styles.form}>
                     <div className={styles.field}>
                         <label>מספר טלפון</label>
