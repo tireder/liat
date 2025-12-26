@@ -50,6 +50,16 @@ export async function GET(request: NextRequest) {
 
         if (error) throw error;
 
+        // Get course registrations
+        const { data: courseRegistrations } = await supabase
+            .from("course_registrations")
+            .select(`
+                *,
+                course:courses(id, title, description, start_date, location, price)
+            `)
+            .eq("client_id", client.id)
+            .order("created_at", { ascending: false });
+
         return NextResponse.json({
             client: {
                 id: client.id,
@@ -57,6 +67,7 @@ export async function GET(request: NextRequest) {
                 phone: client.phone,
             },
             bookings: bookings || [],
+            courseRegistrations: courseRegistrations || [],
         });
     } catch (error) {
         console.error("Error fetching bookings:", error);

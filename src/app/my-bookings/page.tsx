@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, CalendarIcon, ClockIcon, XIcon, EditIcon, CheckIcon, PhoneIcon } from "@/components/icons";
+import { ArrowLeftIcon, CalendarIcon, ClockIcon, XIcon, PhoneIcon, BookIcon } from "@/components/icons";
 import styles from "./page.module.css";
 
 interface Booking {
@@ -19,6 +19,19 @@ interface Booking {
     };
 }
 
+interface CourseRegistration {
+    id: string;
+    status: string;
+    created_at: string;
+    course: {
+        id: string;
+        title: string;
+        start_date: string;
+        location: string | null;
+        price: number;
+    };
+}
+
 interface ClientInfo {
     name: string;
     phone: string;
@@ -32,6 +45,7 @@ export default function MyBookingsPage() {
     const [loading, setLoading] = useState(true); // Start as loading to check session
     const [error, setError] = useState("");
     const [bookings, setBookings] = useState<Booking[]>([]);
+    const [courseRegistrations, setCourseRegistrations] = useState<CourseRegistration[]>([]);
     const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
     const [cancelHoursBefore, setCancelHoursBefore] = useState(24);
 
@@ -51,6 +65,7 @@ export default function MyBookingsPage() {
                                 setPhone(session.phone);
                                 setClientInfo(clientData.client);
                                 setBookings(clientData.bookings || []);
+                                setCourseRegistrations(clientData.courseRegistrations || []);
                                 setStep("bookings");
                                 setLoading(false);
                                 return;
@@ -144,11 +159,13 @@ export default function MyBookingsPage() {
                     // Existing client with name
                     setClientInfo(clientData.client);
                     setBookings(clientData.bookings || []);
+                    setCourseRegistrations(clientData.courseRegistrations || []);
                     setStep("bookings");
                 } else if (clientData.client) {
                     // Client exists but no name - ask for name
                     setClientInfo(clientData.client);
                     setBookings(clientData.bookings || []);
+                    setCourseRegistrations(clientData.courseRegistrations || []);
                     setStep("name");
                 } else {
                     // New client - ask for name
@@ -437,6 +454,38 @@ export default function MyBookingsPage() {
                                                 {booking.status === "confirmed" && new Date(`${booking.date}T${booking.start_time}`) > new Date() && "מאושר"}
                                                 {booking.status === "pending" && "ממתין לאישור"}
                                                 {booking.status === "pending_change" && "ממתין לשינוי"}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Course Registrations */}
+                        {courseRegistrations.length > 0 && (
+                            <section className={styles.section}>
+                                <h2 className={styles.sectionTitle}>
+                                    <BookIcon size={18} /> הרשמות לקורסים
+                                </h2>
+                                <div className={styles.bookingsList}>
+                                    {courseRegistrations.map((reg) => (
+                                        <div key={reg.id} className={`${styles.bookingCard} ${reg.status === "cancelled" ? styles.pastBooking : ""}`}>
+                                            <div className={styles.bookingInfo}>
+                                                <div className={styles.serviceName}>{reg.course.title}</div>
+                                                <div className={styles.bookingMeta}>
+                                                    <span>
+                                                        <CalendarIcon size={14} />
+                                                        {formatDate(reg.course.start_date)}
+                                                    </span>
+                                                    {reg.course.location && (
+                                                        <span>📍 {reg.course.location}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className={styles.status}>
+                                                {reg.status === "confirmed" && "מאושר"}
+                                                {reg.status === "cancelled" && "בוטל"}
+                                                {reg.status === "pending" && "ממתין"}
                                             </span>
                                         </div>
                                     ))}
