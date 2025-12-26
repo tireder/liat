@@ -445,7 +445,7 @@ export default function MyBookingsPage() {
                                 <h2 className={styles.sectionTitle}>היסטוריה</h2>
                                 <div className={styles.bookingsList}>
                                     {pastBookings.slice(0, 5).map((booking) => (
-                                        <div key={booking.id} className={`${styles.bookingCard} ${styles.pastBooking}`}>
+                                        <div key={booking.id} className={`${styles.bookingCard} ${booking.status === "cancelled" || booking.status === "completed" || booking.status === "no_show" ? styles.pastBooking : ""}`}>
                                             <div className={styles.bookingInfo}>
                                                 <div className={styles.serviceName}>{booking.service.name}</div>
                                                 <div className={styles.bookingMeta}>
@@ -453,14 +453,27 @@ export default function MyBookingsPage() {
                                                     <span>{booking.start_time}</span>
                                                 </div>
                                             </div>
-                                            <span className={styles.status}>
-                                                {booking.status === "cancelled" && "בוטל"}
-                                                {booking.status === "completed" && "הושלם"}
-                                                {booking.status === "no_show" && "לא הגיעה"}
-                                                {booking.status === "confirmed" && "מאושר"}
-                                                {booking.status === "pending" && "ממתין לאישור"}
-                                                {booking.status === "pending_change" && "ממתין לשינוי"}
-                                            </span>
+                                            <div className={styles.bookingActions}>
+                                                <span className={styles.status}>
+                                                    {booking.status === "cancelled" && "בוטל"}
+                                                    {booking.status === "completed" && "הושלם"}
+                                                    {booking.status === "no_show" && "לא הגיעה"}
+                                                    {booking.status === "confirmed" && "מאושר"}
+                                                    {booking.status === "pending" && "ממתין לאישור"}
+                                                    {booking.status === "pending_change" && "ממתין לשינוי"}
+                                                </span>
+                                                {/* Allow cancel for confirmed/pending bookings */}
+                                                {(booking.status === "confirmed" || booking.status === "pending") && (
+                                                    <button
+                                                        className={styles.cancelBtn}
+                                                        onClick={() => cancelBooking(booking.id)}
+                                                        disabled={loading}
+                                                    >
+                                                        <XIcon size={16} />
+                                                        ביטול
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabase, BookingStatus } from "@/lib/database.types";
+import { createAdminClient } from "@/lib/supabase/server";
+import { sendSms } from "@/lib/sms4free";
 
 // Allowed state transitions
+type BookingStatus = "confirmed" | "pending" | "pending_change" | "cancelled" | "completed" | "no_show";
+
 const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
     confirmed: ["pending_change", "cancelled", "completed", "no_show"],
     pending: ["confirmed", "cancelled"],
@@ -11,12 +14,122 @@ const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
     no_show: [],
 };
 
+// Helper functions
+function formatPhone(phone: string): string {
+    const cleaned = phone.replace(/\D/g, "");
+    if (cleaned.startsWith("972")) return "0" + cleaned.slice(3);
+    if (cleaned.startsWith("0")) return cleaned;
+    return "0" + cleaned;
+}
+
+function formatDateHebrew(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("he-IL", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+}
+
+// Send notification when booking is changed/cancelled
+async function sendBookingChangeNotification(
+    supabase: ReturnType<typeof createAdminClient>,
+    booking: {
+        date: string;
+        start_time: string;
+        client: { phone: string; name?: string };
+        service: { name: string };
+    },
+    changeType: "cancelled" | "changed" | "confirmed",
+    newDate?: string,
+    newTime?: string
+) {
+    try {
+        const { data: settings } = await supabase
+            .from("settings")
+            .select("key, value")
+            .in("key", ["phone", "business_name"]);
+
+        const artistPhone = settings?.find(s => s.key === "phone")?.value;
+        const businessName = settings?.find(s => s.key === "business_name")?.value || "ליאת";
+
+        const clientPhone = formatPhone(booking.client.phone);
+        const clientName = booking.client.name || clientPhone;
+        const dateFormatted = formatDateHebrew(booking.date);
+
+        let customerMsg = "";
+        let artistMsg = "";
+
+        if (changeType === "cancelled") {
+            customerMsg = `שלום ${clientName},
+התור שלך בוטל:
+${booking.service.name}
+${dateFormatted} בשעה ${booking.start_time}
+
+לקביעת תור חדש: ${process.env.NEXT_PUBLIC_SITE_URL || "https://liat-nine.vercel.app"}/book
+
+${businessName}`;
+
+            artistMsg = `תור בוטל ❌
+${booking.service.name}
+${dateFormatted} בשעה ${booking.start_time}
+${clientName} - ${clientPhone}`;
+        } else if (changeType === "changed" && newDate && newTime) {
+            const newDateFormatted = formatDateHebrew(newDate);
+            customerMsg = `שלום ${clientName},
+התור שלך הועבר:
+${booking.service.name}
+📅 ${newDateFormatted} בשעה ${newTime}
+
+${businessName}`;
+
+            artistMsg = `תור הועבר 📅
+${booking.service.name}
+${clientName} - ${clientPhone}
+תאריך חדש: ${newDateFormatted} ${newTime}`;
+        } else if (changeType === "confirmed") {
+            customerMsg = `שלום ${clientName},
+התור שלך אושר! ✓
+${booking.service.name}
+${dateFormatted} בשעה ${booking.start_time}
+
+${businessName}`;
+
+            artistMsg = `תור אושר ✓
+${booking.service.name}
+${dateFormatted} בשעה ${booking.start_time}
+${clientName} - ${clientPhone}`;
+        }
+
+        // Send to customer
+        if (customerMsg) {
+            await sendSms({
+                sender: businessName,
+                recipients: clientPhone,
+                msg: customerMsg,
+            });
+        }
+
+        // Send to artist
+        if (artistMsg && artistPhone) {
+            await sendSms({
+                sender: businessName,
+                recipients: formatPhone(artistPhone),
+                msg: artistMsg,
+            });
+        }
+    } catch (error) {
+        console.error("Error sending booking change notification:", error);
+    }
+}
+
 type Params = { params: Promise<{ id: string }> };
 
 // GET /api/bookings/[id]
 export async function GET(request: NextRequest, context: Params) {
     try {
-        const supabase = await getSupabase();
+        const supabase = createAdminClient();
         const { id } = await context.params;
 
         const { data, error } = await supabase
@@ -39,14 +152,14 @@ export async function GET(request: NextRequest, context: Params) {
 // PATCH /api/bookings/[id] - Update status or request reschedule
 export async function PATCH(request: NextRequest, context: Params) {
     try {
-        const supabase = await getSupabase();
+        const supabase = createAdminClient();
         const { id } = await context.params;
         const body = await request.json();
         const { status, requestedDate, requestedTime, actor = "client" } = body;
 
         const { data: booking, error: fetchError } = await supabase
             .from("bookings")
-            .select("*")
+            .select(`*, client:clients(*), service:services(*)`)
             .eq("id", id)
             .single();
 
@@ -105,6 +218,9 @@ export async function PATCH(request: NextRequest, context: Params) {
                     details: { newDate: requestedDate, newTime: requestedTime },
                 });
 
+                // Send notifications
+                sendBookingChangeNotification(supabase, booking, "changed", requestedDate, requestedTime);
+
                 return NextResponse.json(updated);
             }
         }
@@ -136,6 +252,13 @@ export async function PATCH(request: NextRequest, context: Params) {
                 actor,
             });
 
+            // Send notifications for status changes
+            if (status === "cancelled") {
+                sendBookingChangeNotification(supabase, booking, "cancelled");
+            } else if (status === "confirmed" && currentStatus === "pending") {
+                sendBookingChangeNotification(supabase, booking, "confirmed");
+            }
+
             return NextResponse.json(updated);
         }
 
@@ -149,10 +272,21 @@ export async function PATCH(request: NextRequest, context: Params) {
 // DELETE /api/bookings/[id]
 export async function DELETE(request: NextRequest, context: Params) {
     try {
-        const supabase = await getSupabase();
+        const supabase = createAdminClient();
         const { id } = await context.params;
         const { searchParams } = new URL(request.url);
         const actor = searchParams.get("actor") || "client";
+
+        // Get booking with client and service info for notification
+        const { data: booking, error: fetchError } = await supabase
+            .from("bookings")
+            .select(`*, client:clients(*), service:services(*)`)
+            .eq("id", id)
+            .single();
+
+        if (fetchError || !booking) {
+            return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+        }
 
         const { data: updated, error } = await supabase
             .from("bookings")
@@ -168,6 +302,9 @@ export async function DELETE(request: NextRequest, context: Params) {
             action: "cancelled",
             actor,
         });
+
+        // Send cancellation notifications
+        sendBookingChangeNotification(supabase, booking, "cancelled");
 
         return NextResponse.json(updated);
     } catch (error) {
