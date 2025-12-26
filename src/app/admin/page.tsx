@@ -347,6 +347,12 @@ function BookingsView() {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Edit modal state
+    const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+    const [editDate, setEditDate] = useState("");
+    const [editTime, setEditTime] = useState("");
+    const [saving, setSaving] = useState(false);
+
     const fetchBookings = useCallback(async () => {
         setLoading(true);
         try {
@@ -387,6 +393,41 @@ function BookingsView() {
             console.error("Error updating booking:", error);
             showToast("שגיאה בעדכון הסטטוס", "error");
         }
+    }
+
+    function openEditModal(booking: Booking) {
+        setEditingBooking(booking);
+        setEditDate(booking.date);
+        setEditTime(booking.start_time.slice(0, 5));
+    }
+
+    async function rescheduleBooking() {
+        if (!editingBooking || !editDate || !editTime) return;
+
+        setSaving(true);
+        try {
+            const res = await fetch(`/api/bookings/${editingBooking.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    changeType: "changed",
+                    newDate: editDate,
+                    newTime: editTime,
+                }),
+            });
+
+            if (res.ok) {
+                showToast("התור עודכן ונשלחה הודעה ללקוח", "success");
+                setEditingBooking(null);
+                fetchBookings();
+            } else {
+                showToast("שגיאה בעדכון התור", "error");
+            }
+        } catch (error) {
+            console.error("Error rescheduling booking:", error);
+            showToast("שגיאה בעדכון התור", "error");
+        }
+        setSaving(false);
     }
 
     function formatDate(dateStr: string): string {
@@ -466,9 +507,62 @@ function BookingsView() {
                                     <option value="cancelled">בוטל</option>
                                     <option value="no_show">לא הגיע</option>
                                 </select>
+                                <button
+                                    className={styles.editBtn}
+                                    onClick={() => openEditModal(booking)}
+                                    title="ערוך תור"
+                                >
+                                    ✏️
+                                </button>
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            {editingBooking && (
+                <div className={styles.modalOverlay} onClick={() => setEditingBooking(null)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>עריכת תור</h3>
+                        <p className={styles.modalInfo}>
+                            {editingBooking.client?.name || editingBooking.client?.phone} - {editingBooking.service?.name}
+                        </p>
+                        <div className={styles.modalField}>
+                            <label>תאריך</label>
+                            <input
+                                type="date"
+                                value={editDate}
+                                onChange={(e) => setEditDate(e.target.value)}
+                                className={styles.textInput}
+                                min={new Date().toISOString().split("T")[0]}
+                            />
+                        </div>
+                        <div className={styles.modalField}>
+                            <label>שעה</label>
+                            <input
+                                type="time"
+                                value={editTime}
+                                onChange={(e) => setEditTime(e.target.value)}
+                                className={styles.textInput}
+                            />
+                        </div>
+                        <div className={styles.modalActions}>
+                            <button
+                                className={styles.cancelBtn}
+                                onClick={() => setEditingBooking(null)}
+                            >
+                                ביטול
+                            </button>
+                            <button
+                                className={styles.saveBtn}
+                                onClick={rescheduleBooking}
+                                disabled={saving}
+                            >
+                                {saving ? "שומר..." : "שמור ושלח הודעה"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -3,6 +3,7 @@ import { Heebo } from "next/font/google";
 import "./globals.css";
 import AccessibilityWidget from "@/components/ui/AccessibilityWidget";
 import PwaPrompt from "@/components/ui/PwaPrompt";
+import MyBookingsWidget from "@/components/ui/MyBookingsWidget";
 
 const heebo = Heebo({
   variable: "--font-heebo",
@@ -48,6 +49,7 @@ export default function RootLayout({
         {children}
         <AccessibilityWidget />
         <PwaPrompt />
+        <MyBookingsWidget />
       </body>
     </html>
   );
