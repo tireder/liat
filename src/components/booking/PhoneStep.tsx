@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
 import { BookingData } from "@/app/book/page";
 import { PhoneIcon, CheckIcon } from "@/components/icons";
 import styles from "./PhoneStep.module.css";
@@ -23,42 +22,21 @@ export default function PhoneStep({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    const supabase = supabaseUrl && supabaseAnonKey
-        ? createBrowserClient(supabaseUrl, supabaseAnonKey)
-        : null;
-
-    // Format phone for E.164 (Israeli format)
-    function formatPhoneE164(phoneNumber: string): string {
-        const cleaned = phoneNumber.replace(/\D/g, "");
-        if (cleaned.startsWith("0")) {
-            return "+972" + cleaned.slice(1);
-        }
-        if (cleaned.startsWith("972")) {
-            return "+" + cleaned;
-        }
-        return "+972" + cleaned;
-    }
-
     async function sendOtp() {
-        if (!supabase) {
-            setError("שגיאה בהתחברות");
-            return;
-        }
         setError("");
         setLoading(true);
 
         try {
-            const formattedPhone = formatPhoneE164(phone);
-            const { error: otpError } = await supabase.auth.signInWithOtp({
-                phone: formattedPhone,
+            const res = await fetch("/api/otp/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone }),
             });
 
-            if (otpError) {
-                setError("שגיאה בשליחת הקוד. נסי שוב.");
-                console.error("OTP Error:", otpError);
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.error || "שגיאה בשליחת הקוד. נסי שוב.");
             } else {
                 setStep("otp");
             }
@@ -70,24 +48,20 @@ export default function PhoneStep({
     }
 
     async function verifyOtp() {
-        if (!supabase) {
-            setError("שגיאה בהתחברות");
-            return;
-        }
         setError("");
         setLoading(true);
 
         try {
-            const formattedPhone = formatPhoneE164(phone);
-            const { error: verifyError } = await supabase.auth.verifyOtp({
-                phone: formattedPhone,
-                token: otp,
-                type: "sms",
+            const res = await fetch("/api/otp/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone, code: otp }),
             });
 
-            if (verifyError) {
-                setError("קוד שגוי. נסי שוב.");
-                console.error("Verify Error:", verifyError);
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.error || "קוד שגוי. נסי שוב.");
             } else {
                 updateBookingData({ phone, name: phone });
                 setStep("verified");
