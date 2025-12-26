@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
 import {
     CalendarIcon, ClockIcon, CheckIcon, XIcon,
-    NailPolishIcon, HomeIcon, SettingsIcon, LogoutIcon, EditIcon, TrashIcon, PlusIcon, BookIcon, ImageIcon
+    NailPolishIcon, HomeIcon, SettingsIcon, LogoutIcon, EditIcon, TrashIcon, PlusIcon, BookIcon, ImageIcon, PhoneIcon
 } from "@/components/icons";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 import styles from "./page.module.css";
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
 
 function AdminContent() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<"dashboard" | "bookings" | "services" | "courses" | "gallery" | "settings">("dashboard");
+    const [activeTab, setActiveTab] = useState<"dashboard" | "bookings" | "services" | "courses" | "gallery" | "clients" | "settings">("dashboard");
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [authChecked, setAuthChecked] = useState(false);
@@ -280,6 +280,7 @@ function AdminContent() {
                 {activeTab === "services" && <ServicesView />}
                 {activeTab === "courses" && <CoursesView />}
                 {activeTab === "gallery" && <GalleryView />}
+                {activeTab === "clients" && <ClientsView />}
                 {activeTab === "settings" && <SettingsView />}
             </main>
 
@@ -319,6 +320,13 @@ function AdminContent() {
                 >
                     <ImageIcon size={22} />
                     <span>גלריה</span>
+                </button>
+                <button
+                    className={`${styles.navItem} ${activeTab === "clients" ? styles.active : ""}`}
+                    onClick={() => setActiveTab("clients")}
+                >
+                    <PhoneIcon size={22} />
+                    <span>לקוחות</span>
                 </button>
                 <button
                     className={`${styles.navItem} ${activeTab === "settings" ? styles.active : ""}`}
@@ -1556,6 +1564,229 @@ function GalleryView() {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Clients View Component - List clients and send bulk SMS
+interface Client {
+    id: string;
+    phone: string;
+    name: string;
+    created_at: string;
+    booking_count: number;
+}
+
+const SMS_TEMPLATES = [
+    { id: "holiday", label: "הודעת חופשה", message: "שלום! 💅\nהסלון יהיה סגור בתאריכים: [תאריכים]\nנחזור לפעילות ב[תאריך].\nליאת" },
+    { id: "discount", label: "הנחה מיוחדת", message: "שלום! 🎁\nרק להיום - 20% הנחה על כל הטיפולים!\nהזמיני עכשיו: [קישור]\nליאת" },
+    { id: "reminder", label: "תזכורת כללית", message: "שלום! 💕\nלא ראינו אותך הרבה זמן!\nבואי לפנק את הציפורניים 💅\nליאת" },
+    { id: "custom", label: "הודעה מותאמת", message: "" },
+];
+
+function ClientsView() {
+    const { showToast } = useToast();
+    const [clients, setClients] = useState<Client[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [showSmsModal, setShowSmsModal] = useState(false);
+    const [smsMessage, setSmsMessage] = useState("");
+    const [selectedTemplate, setSelectedTemplate] = useState("custom");
+    const [sending, setSending] = useState(false);
+
+    const fetchClients = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/clients");
+            if (res.ok) {
+                const data = await res.json();
+                setClients(data);
+            }
+        } catch (error) {
+            console.error("Error fetching clients:", error);
+            showToast("שגיאה בטעינת לקוחות", "error");
+        }
+        setLoading(false);
+    }, [showToast]);
+
+    useEffect(() => {
+        fetchClients();
+    }, [fetchClients]);
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const selectAll = () => {
+        if (selectedIds.length === clients.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(clients.map(c => c.id));
+        }
+    };
+
+    const handleTemplateChange = (templateId: string) => {
+        setSelectedTemplate(templateId);
+        const template = SMS_TEMPLATES.find(t => t.id === templateId);
+        if (template) {
+            setSmsMessage(template.message);
+        }
+    };
+
+    const sendSms = async (sendToAll: boolean) => {
+        if (!smsMessage.trim()) {
+            showToast("יש להזין הודעה", "error");
+            return;
+        }
+
+        setSending(true);
+        try {
+            const res = await fetch("/api/admin/sms/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: smsMessage,
+                    clientIds: sendToAll ? null : selectedIds,
+                    sendToAll,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                showToast(`ההודעה נשלחה ל-${data.sent_to} לקוחות`, "success");
+                setShowSmsModal(false);
+                setSmsMessage("");
+                setSelectedIds([]);
+            } else {
+                showToast(data.error || "שגיאה בשליחת SMS", "error");
+            }
+        } catch {
+            showToast("שגיאה בשליחת SMS", "error");
+        }
+        setSending(false);
+    };
+
+    return (
+        <div className={styles.view}>
+            <div className={styles.viewHeader}>
+                <h2>לקוחות</h2>
+                <div className={styles.viewActions}>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => setShowSmsModal(true)}
+                        disabled={selectedIds.length === 0 && clients.length === 0}
+                    >
+                        📱 שליחת SMS
+                    </button>
+                </div>
+            </div>
+
+            {loading ? (
+                <div className={styles.loading}>טוען לקוחות...</div>
+            ) : clients.length === 0 ? (
+                <div className={styles.empty}>אין לקוחות רשומות</div>
+            ) : (
+                <>
+                    <div className={styles.clientsHeader}>
+                        <label className={styles.selectAll}>
+                            <input
+                                type="checkbox"
+                                checked={selectedIds.length === clients.length}
+                                onChange={selectAll}
+                            />
+                            {selectedIds.length > 0 ? `נבחרו ${selectedIds.length}` : "בחירת הכל"}
+                        </label>
+                        <span className={styles.clientCount}>{clients.length} לקוחות</span>
+                    </div>
+
+                    <div className={styles.clientsList}>
+                        {clients.map(client => (
+                            <div
+                                key={client.id}
+                                className={`${styles.clientCard} ${selectedIds.includes(client.id) ? styles.selected : ""}`}
+                                onClick={() => toggleSelect(client.id)}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={selectedIds.includes(client.id)}
+                                    onChange={() => toggleSelect(client.id)}
+                                    onClick={e => e.stopPropagation()}
+                                />
+                                <div className={styles.clientInfo}>
+                                    <span className={styles.clientName}>{client.name}</span>
+                                    <span className={styles.clientPhone}>{client.phone}</span>
+                                </div>
+                                <span className={styles.clientBookings}>
+                                    {client.booking_count} תורים
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {/* SMS Modal */}
+            {showSmsModal && (
+                <div className={styles.modal}>
+                    <div className={styles.modalContent}>
+                        <div className={styles.modalHeader}>
+                            <h3>שליחת SMS</h3>
+                            <button onClick={() => setShowSmsModal(false)}>
+                                <XIcon size={20} />
+                            </button>
+                        </div>
+
+                        <div className={styles.modalBody}>
+                            <div className={styles.formGroup}>
+                                <label>תבנית</label>
+                                <select
+                                    value={selectedTemplate}
+                                    onChange={e => handleTemplateChange(e.target.value)}
+                                >
+                                    {SMS_TEMPLATES.map(t => (
+                                        <option key={t.id} value={t.id}>{t.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label>הודעה ({smsMessage.length} תווים)</label>
+                                <textarea
+                                    value={smsMessage}
+                                    onChange={e => setSmsMessage(e.target.value)}
+                                    placeholder="כתבי את ההודעה..."
+                                    rows={5}
+                                />
+                            </div>
+
+                            <div className={styles.smsRecipients}>
+                                {selectedIds.length > 0
+                                    ? `ישלח ל-${selectedIds.length} לקוחות נבחרות`
+                                    : `ישלח לכל ${clients.length} הלקוחות`}
+                            </div>
+                        </div>
+
+                        <div className={styles.modalFooter}>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => setShowSmsModal(false)}
+                            >
+                                ביטול
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => sendSms(selectedIds.length === 0)}
+                                disabled={sending || !smsMessage.trim()}
+                            >
+                                {sending ? "שולח..." : "שלחי SMS"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

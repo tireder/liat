@@ -276,4 +276,3 @@ export const ImageIcon: React.FC<IconProps> = ({ size = 24, className, color = "
         <path d="M21 15L16 10L5 21" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
 );
-

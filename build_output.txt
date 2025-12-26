@@ -6,14 +6,14 @@
 - Environments: .env
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 1343.1ms
+Γ£ô Compiled successfully in 1316.8ms
   Running TypeScript ...
   Collecting page data using 27 workers ...
-  Generating static pages using 27 workers (0/31) ...
-  Generating static pages using 27 workers (7/31) 
-  Generating static pages using 27 workers (15/31) 
-  Generating static pages using 27 workers (23/31) 
-Γ£ô Generating static pages using 27 workers (31/31) in 197.5ms
+  Generating static pages using 27 workers (0/33) ...
+  Generating static pages using 27 workers (8/33) 
+  Generating static pages using 27 workers (16/33) 
+  Generating static pages using 27 workers (24/33) 
+Γ£ô Generating static pages using 27 workers (33/33) in 191.2ms
   Finalizing page optimization ...
 
 Route (app)
@@ -23,12 +23,14 @@ Route (app)
 Γö£ Γùï /admin
 Γö£ Γùï /admin-login
 Γö£ ╞Æ /api/admin/bookings
+Γö£ ╞Æ /api/admin/clients
 Γö£ ╞Æ /api/admin/courses
 Γö£ ╞Æ /api/admin/dashboard
 Γö£ ╞Æ /api/admin/gallery
 Γö£ ╞Æ /api/admin/holidays
 Γö£ ╞Æ /api/admin/services
 Γö£ ╞Æ /api/admin/settings
+Γö£ ╞Æ /api/admin/sms/send
 Γö£ ╞Æ /api/auth/send-otp
 Γö£ ╞Æ /api/bookings
 Γö£ ╞Æ /api/bookings/[id]
