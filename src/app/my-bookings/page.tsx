@@ -380,7 +380,12 @@ export default function MyBookingsPage() {
                                                 </div>
                                             </div>
                                             <span className={styles.status}>
-                                                {booking.status === "cancelled" ? "בוטל" : "הושלם"}
+                                                {booking.status === "cancelled" && "בוטל"}
+                                                {booking.status === "completed" && "הושלם"}
+                                                {booking.status === "no_show" && "לא הגיעה"}
+                                                {booking.status === "confirmed" && "הושלם"}
+                                                {booking.status === "pending" && "ממתין"}
+                                                {booking.status === "pending_change" && "ממתין לאישור"}
                                             </span>
                                         </div>
                                     ))}
