@@ -351,3 +351,34 @@ textarea {
     font-size: 2.5rem;
   }
 }
+
+/* Accessibility Classes */
+html.font-large {
+  font-size: 110%;
+}
+
+html.font-xlarge {
+  font-size: 120%;
+}
+
+html.high-contrast {
+  --background: #000000;
+  --background-card: #111111;
+  --foreground: #ffffff;
+  --foreground-muted: #cccccc;
+  --border-color: #ffffff;
+  --color-primary: #ffd700;
+  --color-primary-dark: #ffcc00;
+  --color-accent: #333333;
+}
+
+html.grayscale {
+  filter: grayscale(100%);
+}
+
+html.link-highlight a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  background: rgba(255, 215, 0, 0.2);
+  padding: 0 0.25rem;
+}

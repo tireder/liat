@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Heebo } from "next/font/google";
 import "./globals.css";
+import AccessibilityWidget from "@/components/ui/AccessibilityWidget";
 
 const heebo = Heebo({
   variable: "--font-heebo",
@@ -44,7 +45,9 @@ export default function RootLayout({
     <html lang="he" dir="rtl">
       <body className={`${heebo.variable} antialiased`}>
         {children}
+        <AccessibilityWidget />
       </body>
     </html>
   );
 }
+

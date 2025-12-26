@@ -6,24 +6,26 @@
 - Environments: .env
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 1283.8ms
+Γ£ô Compiled successfully in 1360.7ms
   Running TypeScript ...
   Collecting page data using 27 workers ...
-  Generating static pages using 27 workers (0/20) ...
-  Generating static pages using 27 workers (5/20) 
-  Generating static pages using 27 workers (10/20) 
-  Generating static pages using 27 workers (15/20) 
-Γ£ô Generating static pages using 27 workers (20/20) in 438.0ms
+  Generating static pages using 27 workers (0/27) ...
+  Generating static pages using 27 workers (6/27) 
+  Generating static pages using 27 workers (13/27) 
+  Generating static pages using 27 workers (20/27) 
+Γ£ô Generating static pages using 27 workers (27/27) in 199.7ms
   Finalizing page optimization ...
 
 Route (app)
 Γöî Γùï /
 Γö£ Γùï /_not-found
+Γö£ Γùï /accessibility
 Γö£ Γùï /admin
 Γö£ Γùï /admin-login
 Γö£ ╞Æ /api/admin/bookings
 Γö£ ╞Æ /api/admin/courses
 Γö£ ╞Æ /api/admin/dashboard
+Γö£ ╞Æ /api/admin/gallery
 Γö£ ╞Æ /api/admin/holidays
 Γö£ ╞Æ /api/admin/services
 Γö£ ╞Æ /api/admin/settings
@@ -33,10 +35,15 @@ Route (app)
 Γö£ ╞Æ /api/bookings/available
 Γö£ ╞Æ /api/courses
 Γö£ ╞Æ /api/courses/[id]/register
+Γö£ ╞Æ /api/gallery
 Γö£ ╞Æ /api/services
 Γö£ ╞Æ /api/settings
 Γö£ Γùï /book
-Γöö Γùï /courses
+Γö£ Γùï /cancellation
+Γö£ Γùï /courses
+Γö£ Γùï /gallery
+Γö£ Γùï /privacy
+Γöö Γùï /terms
 
 
 Γùï  (Static)   prerendered as static content

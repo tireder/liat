@@ -260,3 +260,20 @@ export const PlusIcon: React.FC<IconProps> = ({ size = 24, className, color = "c
     </svg>
 );
 
+export const WazeIcon: React.FC<IconProps> = ({ size = 24, className, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z" stroke={color} strokeWidth="1.5" />
+        <circle cx="9" cy="10" r="1.5" fill={color} />
+        <circle cx="15" cy="10" r="1.5" fill={color} />
+        <path d="M8.5 14C8.5 14 10 16 12 16C14 16 15.5 14 15.5 14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+);
+
+export const ImageIcon: React.FC<IconProps> = ({ size = 24, className, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke={color} strokeWidth="1.5" />
+        <circle cx="8.5" cy="8.5" r="1.5" fill={color} />
+        <path d="M21 15L16 10L5 21" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+);
+

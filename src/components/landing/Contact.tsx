@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapPinIcon, PhoneIcon, MessageIcon, ClockIcon, InstagramIcon, FacebookIcon, TikTokIcon, ArrowLeftIcon, MapIcon } from "@/components/icons";
+import { MapPinIcon, PhoneIcon, MessageIcon, ClockIcon, InstagramIcon, FacebookIcon, TikTokIcon, ArrowLeftIcon, WazeIcon } from "@/components/icons";
 import styles from "./Contact.module.css";
 
 type SiteSettings = {
@@ -196,11 +196,34 @@ export default function Contact() {
                         </div>
                     </div>
 
-                    {/* Map Placeholder */}
+                    {/* Map with Navigation Links */}
                     <div className={styles.mapContainer}>
-                        <div className={styles.mapPlaceholder}>
-                            <MapIcon size={48} color="var(--color-primary)" />
-                            <span className={styles.mapText}>מפה</span>
+                        <iframe
+                            className={styles.mapEmbed}
+                            src={`https://www.openstreetmap.org/export/embed.html?bbox=34.76,32.07,34.78,32.09&layer=mapnik&marker=32.08,34.77`}
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="מיקום הסלון"
+                        />
+                        <div className={styles.mapButtons}>
+                            <a
+                                href={`https://waze.com/ul?q=${encodeURIComponent(settings?.address || "רחוב הרצל 50 תל אביב")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.mapBtn}
+                            >
+                                <WazeIcon size={18} />
+                                Waze
+                            </a>
+                            <a
+                                href={googleMapsUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.mapBtn}
+                            >
+                                <MapPinIcon size={18} />
+                                Google Maps
+                            </a>
                         </div>
                     </div>
                 </div>
