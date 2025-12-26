@@ -6,14 +6,34 @@
 - Environments: .env
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 1368.9ms
+Γ£ô Compiled successfully in 2.1s
   Running TypeScript ...
   Collecting page data using 27 workers ...
   Generating static pages using 27 workers (0/33) ...
   Generating static pages using 27 workers (8/33) 
+node.exe : Error fetching settings: Error: Missing 
+Supabase admin credentials
+At C:\Users\Michael\AppData\Roaming\npm\npm.ps1:24 
+char:5
++     & "node$exe"  
+"$basedir/node_modules/npm/bin/npm-cli.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error fet 
+   ching ...min credentials:String) [], RemoteExcepti  
+  on
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    at <unknown> (D:\Projects\Liart\.next\server\chunks
+\ssr\_d2890a94._.js:58:46762)
+    at cu (D:\Projects\Liart\.next\server\chunks\ssr\_d
+2890a94._.js:58:46872)
+    at cv (D:\Projects\Liart\.next\server\chunks\ssr\_d
+2890a94._.js:58:47311)
+    at stringify (<anonymous>)
   Generating static pages using 27 workers (16/33) 
   Generating static pages using 27 workers (24/33) 
-Γ£ô Generating static pages using 27 workers (33/33) in 184.4ms
+Γ£ô Generating static pages using 27 workers (33/33) in 228.0ms
   Finalizing page optimization ...
 
 Route (app)

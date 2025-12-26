@@ -34,8 +34,10 @@ export async function POST(request: NextRequest) {
         });
 
         // In production, send SMS via Twilio, Vonage, etc.
-        // For now, just log it (REMOVE IN PRODUCTION)
-        console.log(`[DEV] OTP for ${normalizedPhone}: ${otp}`);
+        // Log OTP for development only
+        if (process.env.NODE_ENV === "development") {
+            console.log(`[DEV] OTP for ${normalizedPhone}: ${otp}`);
+        }
 
         return NextResponse.json({
             success: true,

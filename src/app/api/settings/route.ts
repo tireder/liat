@@ -43,12 +43,12 @@ export async function GET() {
 
         // Build response with defaults
         const response: SiteSettings = {
-            phone: settingsMap.phone || "050-123-4567",
-            address: settingsMap.address || "רחוב הרצל 50, תל אביב",
-            whatsapp: settingsMap.whatsapp || settingsMap.phone || "972501234567",
-            instagram: settingsMap.instagram || "https://instagram.com",
-            facebook: settingsMap.facebook || "https://facebook.com",
-            tiktok: settingsMap.tiktok || "https://tiktok.com",
+            phone: settingsMap.phone || "",
+            address: settingsMap.address || "",
+            whatsapp: settingsMap.whatsapp || settingsMap.phone || "",
+            instagram: settingsMap.instagram || "",
+            facebook: settingsMap.facebook || "",
+            tiktok: settingsMap.tiktok || "",
             cancelHoursBefore: parseInt(settingsMap.cancel_hours_before || "24"),
             bufferMinutes: parseInt(settingsMap.buffer_minutes || "15"),
             operatingHours: (operatingHours || []).map((h: { day_of_week: number; open_time: string | null; close_time: string | null; active: boolean }) => ({
@@ -64,12 +64,12 @@ export async function GET() {
         console.error("Error fetching public settings:", error);
         // Return defaults on error so the page still works
         return NextResponse.json({
-            phone: "050-123-4567",
-            address: "רחוב הרצל 50, תל אביב",
-            whatsapp: "972501234567",
-            instagram: "https://instagram.com",
-            facebook: "https://facebook.com",
-            tiktok: "https://tiktok.com",
+            phone: "",
+            address: "",
+            whatsapp: "",
+            instagram: "",
+            facebook: "",
+            tiktok: "",
             cancelHoursBefore: 24,
             bufferMinutes: 15,
             operatingHours: [],

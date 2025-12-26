@@ -381,8 +381,23 @@ export default function MyBookingsPage() {
 
                 {step === "bookings" && (
                     <>
-                        <div className={styles.welcome}>
-                            שלום, <strong>{clientInfo?.name}</strong> 👋
+                        <div className={styles.welcomeRow}>
+                            <div className={styles.welcome}>
+                                שלום, <strong>{clientInfo?.name}</strong> 👋
+                            </div>
+                            <button
+                                className={styles.logoutBtn}
+                                onClick={() => {
+                                    localStorage.removeItem("liart_session");
+                                    setStep("phone");
+                                    setPhone("");
+                                    setBookings([]);
+                                    setCourseRegistrations([]);
+                                    setClientInfo(null);
+                                }}
+                            >
+                                יציאה
+                            </button>
                         </div>
 
                         {upcomingBookings.length > 0 ? (

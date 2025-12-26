@@ -79,7 +79,6 @@ ${dateFormatted} בשעה ${booking.start_time}
 
 ${businessName}`;
 
-        console.log("Sending customer SMS to:", clientPhone);
         await sendSms({
             sender: businessName,
             recipients: clientPhone,

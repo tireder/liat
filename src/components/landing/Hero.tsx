@@ -4,7 +4,25 @@ import Link from "next/link";
 import { NailPolishIcon, CalendarIcon, BookIcon, StarIcon, HeartIcon, AwardIcon, ChevronDownIcon } from "@/components/icons";
 import styles from "./Hero.module.css";
 
-export default function Hero() {
+interface HeroSettings {
+    businessName?: string;
+    heroTitle?: string;
+    heroSubtitle?: string;
+    aboutYears?: string;
+    aboutClients?: string;
+}
+
+interface HeroProps {
+    settings?: HeroSettings;
+}
+
+export default function Hero({ settings }: HeroProps) {
+    const businessName = settings?.businessName || "ליאת";
+    const heroTitle = settings?.heroTitle || "יופי בקצות האצבעות";
+    const heroSubtitle = settings?.heroSubtitle || "טיפולי ציפורניים מקצועיים בסביבה אינטימית ומפנקת. כל ביקור הוא חוויה.";
+    const years = settings?.aboutYears || "8";
+    const clients = settings?.aboutClients || "500";
+
     return (
         <section className={styles.hero}>
             {/* Background */}
@@ -20,19 +38,17 @@ export default function Hero() {
                     <div className={styles.logoIcon}>
                         <NailPolishIcon size={40} color="#c9a8a0" />
                     </div>
-                    <h1 className={styles.logo}>ליאת</h1>
+                    <h1 className={styles.logo}>{businessName}</h1>
                     <p className={styles.tagline}>nail artist</p>
                 </div>
 
                 {/* Main headline */}
                 <div className={styles.headline}>
                     <h2 className={styles.title}>
-                        יופי בקצות האצבעות
+                        {heroTitle}
                     </h2>
                     <p className={styles.subtitle}>
-                        טיפולי ציפורניים מקצועיים בסביבה אינטימית ומפנקת.
-                        <br />
-                        כל ביקור הוא חוויה.
+                        {heroSubtitle}
                     </p>
                 </div>
 
@@ -57,12 +73,12 @@ export default function Hero() {
                     <div className={styles.trustDivider} />
                     <div className={styles.trustItem}>
                         <HeartIcon size={16} />
-                        <span>+500 לקוחות</span>
+                        <span>+{clients} לקוחות</span>
                     </div>
                     <div className={styles.trustDivider} />
                     <div className={styles.trustItem}>
                         <AwardIcon size={16} />
-                        <span>8 שנות ניסיון</span>
+                        <span>{years} שנות ניסיון</span>
                     </div>
                 </div>
             </div>

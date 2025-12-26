@@ -149,7 +149,7 @@ export default function Contact() {
                             </div>
                             <div className={styles.infoContent}>
                                 <h3 className={styles.infoTitle}>טלפון</h3>
-                                <p className={styles.infoText}>{settings?.phone || "050-123-4567"}</p>
+                                <p className={styles.infoText}>{settings?.phone}</p>
                                 <span className={styles.infoLink}>
                                     התקשרי עכשיו
                                     <ArrowLeftIcon size={14} />

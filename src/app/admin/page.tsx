@@ -746,14 +746,23 @@ function SettingsView() {
     const [settings, setSettings] = useState({
         cancel_hours_before: "24",
         buffer_minutes: "15",
-        phone: "050-123-4567",
-        address: "רחוב הרצל 50, תל אביב",
+        phone: "",
+        address: "",
         instagram: "",
         facebook: "",
         tiktok: "",
         whatsapp: "",
         otp_method: "sms4free" as "supabase" | "sms4free",
         business_name: "ליאת",
+        // Hero section
+        hero_title: "יופי בקצות האצבעות",
+        hero_subtitle: "טיפולי ציפורניים מקצועיים בסביבה אינטימית ומפנקת. כל ביקור הוא חוויה.",
+        // About section
+        about_name: "ליאת",
+        about_text: "מזה למעלה מ-8 שנים אני עוסקת באמנות הציפורניים מתוך אהבה אמיתית למקצוע.",
+        about_years: "8",
+        about_clients: "500",
+        about_graduates: "50",
     });
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -772,14 +781,23 @@ function SettingsView() {
                             ...prev,
                             cancel_hours_before: data.settings.cancel_hours_before || prev.cancel_hours_before,
                             buffer_minutes: data.settings.buffer_minutes || prev.buffer_minutes,
-                            phone: data.settings.phone || prev.phone,
-                            address: data.settings.address || prev.address,
+                            phone: data.settings.phone || "",
+                            address: data.settings.address || "",
                             instagram: data.settings.instagram || "",
                             facebook: data.settings.facebook || "",
                             tiktok: data.settings.tiktok || "",
                             whatsapp: data.settings.whatsapp || "",
                             otp_method: data.settings.otp_method || "sms4free",
                             business_name: data.settings.business_name || "ליאת",
+                            // Hero section
+                            hero_title: data.settings.hero_title || prev.hero_title,
+                            hero_subtitle: data.settings.hero_subtitle || prev.hero_subtitle,
+                            // About section
+                            about_name: data.settings.about_name || prev.about_name,
+                            about_text: data.settings.about_text || prev.about_text,
+                            about_years: data.settings.about_years || prev.about_years,
+                            about_clients: data.settings.about_clients || prev.about_clients,
+                            about_graduates: data.settings.about_graduates || prev.about_graduates,
                         }));
                     }
                     if (data.operatingHours && data.operatingHours.length > 0) {
@@ -1006,6 +1024,85 @@ function SettingsView() {
                                     ? "שליחת SMS דרך SMS4Free.co.il"
                                     : "שימוש ב-Supabase Auth לאימות OTP"}
                             </span>
+                        </div>
+                    </div>
+
+                    {/* Hero Section Settings */}
+                    <div className={styles.settingsSection}>
+                        <h3 className={styles.settingsSectionTitle}>הגדרות עמוד ראשי (Hero)</h3>
+                        <div className={styles.settingsField}>
+                            <label>כותרת ראשית</label>
+                            <input
+                                type="text"
+                                value={settings.hero_title}
+                                onChange={(e) => setSettings(prev => ({ ...prev, hero_title: e.target.value }))}
+                                className={styles.textInput}
+                                placeholder="יופי בקצות האצבעות"
+                            />
+                        </div>
+                        <div className={styles.settingsField}>
+                            <label>תת-כותרת</label>
+                            <textarea
+                                value={settings.hero_subtitle}
+                                onChange={(e) => setSettings(prev => ({ ...prev, hero_subtitle: e.target.value }))}
+                                className={styles.textArea}
+                                placeholder="טיפולי ציפורניים מקצועיים..."
+                                rows={2}
+                            />
+                        </div>
+                    </div>
+
+                    {/* About Section Settings */}
+                    <div className={styles.settingsSection}>
+                        <h3 className={styles.settingsSectionTitle}>הגדרות אודות</h3>
+                        <div className={styles.settingsField}>
+                            <label>שם (להצגה בעמוד אודות)</label>
+                            <input
+                                type="text"
+                                value={settings.about_name}
+                                onChange={(e) => setSettings(prev => ({ ...prev, about_name: e.target.value }))}
+                                className={styles.textInput}
+                                placeholder="ליאת"
+                            />
+                        </div>
+                        <div className={styles.settingsField}>
+                            <label>טקסט אודות</label>
+                            <textarea
+                                value={settings.about_text}
+                                onChange={(e) => setSettings(prev => ({ ...prev, about_text: e.target.value }))}
+                                className={styles.textArea}
+                                placeholder="ספרי על עצמך..."
+                                rows={4}
+                            />
+                        </div>
+                        <div className={styles.settingsRow}>
+                            <div className={styles.settingsField}>
+                                <label>שנות ניסיון</label>
+                                <input
+                                    type="number"
+                                    value={settings.about_years}
+                                    onChange={(e) => setSettings(prev => ({ ...prev, about_years: e.target.value }))}
+                                    className={styles.numberInput}
+                                />
+                            </div>
+                            <div className={styles.settingsField}>
+                                <label>מספר לקוחות</label>
+                                <input
+                                    type="number"
+                                    value={settings.about_clients}
+                                    onChange={(e) => setSettings(prev => ({ ...prev, about_clients: e.target.value }))}
+                                    className={styles.numberInput}
+                                />
+                            </div>
+                            <div className={styles.settingsField}>
+                                <label>בוגרות קורסים</label>
+                                <input
+                                    type="number"
+                                    value={settings.about_graduates}
+                                    onChange={(e) => setSettings(prev => ({ ...prev, about_graduates: e.target.value }))}
+                                    className={styles.numberInput}
+                                />
+                            </div>
                         </div>
                     </div>
 

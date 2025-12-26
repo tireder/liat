@@ -108,10 +108,32 @@
 }
 
 /* Welcome */
+.welcomeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
 .welcome {
     font-size: 1.125rem;
     color: var(--foreground);
-    margin-bottom: 1.5rem;
+}
+
+.logoutBtn {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--foreground-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logoutBtn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
 }
 
 /* Section */
