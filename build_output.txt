@@ -6,11 +6,13 @@
 - Environments: .env
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 1587.6ms
+Γ£ô Compiled successfully in 1436.7ms
   Running TypeScript ...
   Collecting page data using 27 workers ...
-  Generating static pages using 27 workers (0/33) ...
-  Generating static pages using 27 workers (8/33) 
+  Generating static pages using 27 workers (0/34) ...
+  Generating static pages using 27 workers (8/34) 
+  Generating static pages using 27 workers (16/34) 
+  Generating static pages using 27 workers (25/34) 
 node.exe : Error fetching settings: Error: Missing 
 Supabase admin credentials
 At C:\Users\Michael\AppData\Roaming\npm\npm.ps1:24 
@@ -31,9 +33,7 @@ char:5
     at cv (D:\Projects\Liart\.next\server\chunks\ssr\_d
 2890a94._.js:58:47311)
     at stringify (<anonymous>)
-  Generating static pages using 27 workers (16/33) 
-  Generating static pages using 27 workers (24/33) 
-Γ£ô Generating static pages using 27 workers (33/33) in 210.3ms
+Γ£ô Generating static pages using 27 workers (34/34) in 165.3ms
   Finalizing page optimization ...
 
 Route (app)
@@ -58,6 +58,7 @@ Route (app)
 Γö£ ╞Æ /api/bookings/my
 Γö£ ╞Æ /api/courses
 Γö£ ╞Æ /api/courses/[id]/register
+Γö£ ╞Æ /api/cron/keep-alive
 Γö£ ╞Æ /api/gallery
 Γö£ ╞Æ /api/otp/send
 Γö£ ╞Æ /api/otp/verify
