@@ -1,5 +1,81 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { sendSms } from "@/lib/sms4free";
+
+// Helper to format phone
+function formatPhone(phone: string): string {
+    const cleaned = phone.replace(/\D/g, "");
+    if (cleaned.startsWith("972")) {
+        return "0" + cleaned.slice(3);
+    }
+    if (cleaned.startsWith("0")) {
+        return cleaned;
+    }
+    return "0" + cleaned;
+}
+
+// Helper to format date
+function formatDateHebrew(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("he-IL", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+}
+
+// Send course registration notifications
+async function sendCourseNotifications(
+    supabase: ReturnType<typeof createAdminClient>,
+    course: { title: string; start_date: string; location?: string },
+    clientPhone: string,
+    clientName: string
+) {
+    try {
+        // Get settings
+        const { data: settings } = await supabase
+            .from("settings")
+            .select("key, value")
+            .in("key", ["phone", "business_name"]);
+
+        const artistPhone = settings?.find(s => s.key === "phone")?.value;
+        const businessName = settings?.find(s => s.key === "business_name")?.value || "ליאת";
+
+        const dateFormatted = formatDateHebrew(course.start_date);
+        const formattedClientPhone = formatPhone(clientPhone);
+
+        // Send notification to artist
+        if (artistPhone) {
+            const artistMsg = `הרשמה לקורס! 📚
+${course.title}
+${dateFormatted}
+${clientName} - ${formattedClientPhone}`;
+
+            await sendSms({
+                sender: businessName,
+                recipients: formatPhone(artistPhone),
+                msg: artistMsg,
+            });
+        }
+
+        // Send confirmation to customer
+        const customerMsg = `שלום ${clientName}! 💅
+נרשמת לקורס: ${course.title}
+📅 ${dateFormatted}
+${course.location ? `📍 ${course.location}` : ""}
+
+${businessName}`;
+
+        await sendSms({
+            sender: businessName,
+            recipients: formattedClientPhone,
+            msg: customerMsg,
+        });
+    } catch (error) {
+        console.error("Error sending course notifications:", error);
+    }
+}
 
 // POST /api/courses/[id]/register - Register for a course
 export async function POST(
@@ -48,16 +124,17 @@ export async function POST(
         }
 
         // Find or create client
+        const formattedPhone = formatPhone(phone);
         let { data: client } = await supabase
             .from("clients")
             .select("*")
-            .eq("phone", phone)
+            .eq("phone", formattedPhone)
             .single();
 
         if (!client) {
             const { data: newClient, error: clientError } = await supabase
                 .from("clients")
-                .insert({ phone, name })
+                .insert({ phone: formattedPhone, name })
                 .select()
                 .single();
 
@@ -94,6 +171,9 @@ export async function POST(
 
                 if (updateError) throw updateError;
 
+                // Send SMS notifications
+                sendCourseNotifications(supabase, course, phone, name);
+
                 return NextResponse.json({
                     success: true,
                     message: "ההרשמה הופעלה מחדש",
@@ -121,6 +201,9 @@ export async function POST(
             console.error("Error creating registration:", regError);
             throw regError;
         }
+
+        // Send SMS notifications
+        sendCourseNotifications(supabase, course, phone, name);
 
         return NextResponse.json({
             success: true,
