@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import styles from "./AccessibilityWidget.module.css";
 
 interface AccessibilitySettings {
@@ -18,8 +19,16 @@ const defaultSettings: AccessibilitySettings = {
 };
 
 export default function AccessibilityWidget() {
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const [settings, setSettings] = useState<AccessibilitySettings>(defaultSettings);
+
+    // Hide on admin pages
+    const isAdminPage = pathname?.startsWith("/admin");
+
+    if (isAdminPage) {
+        return null;
+    }
 
     // Load settings from localStorage
     useEffect(() => {
