@@ -1,28 +1,126 @@
 import { NextResponse } from "next/server";
-import { getSupabase, Booking, BookingStatus } from "@/lib/database.types";
+import { createAdminClient } from "@/lib/supabase/server";
+import { sendSms } from "@/lib/sms4free";
+
+// Helper to format date for Hebrew display
+function formatDateHebrew(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("he-IL", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+}
+
+// Helper to format phone for Israeli format
+function formatPhone(phone: string): string {
+    const cleaned = phone.replace(/\D/g, "");
+    if (cleaned.startsWith("972")) {
+        return "0" + cleaned.slice(3);
+    }
+    if (cleaned.startsWith("0")) {
+        return cleaned;
+    }
+    return "0" + cleaned;
+}
+
+// Send booking notifications
+async function sendBookingNotifications(
+    supabase: ReturnType<typeof createAdminClient>,
+    booking: {
+        date: string;
+        start_time: string;
+        client: { phone: string; name?: string };
+        service: { name: string };
+    }
+) {
+    try {
+        // Get settings
+        const { data: settings } = await supabase
+            .from("settings")
+            .select("key, value")
+            .in("key", ["phone", "business_name"]);
+
+        const artistPhone = settings?.find(s => s.key === "phone")?.value;
+        const businessName = settings?.find(s => s.key === "business_name")?.value || "ליאת";
+
+        const dateFormatted = formatDateHebrew(booking.date);
+        const clientPhone = formatPhone(booking.client.phone);
+
+        // Send notification to artist
+        if (artistPhone) {
+            const artistMsg = `תור חדש! 📅
+${booking.service.name}
+${dateFormatted} בשעה ${booking.start_time}
+לקוחה: ${clientPhone}`;
+
+            await sendSms({
+                sender: businessName,
+                recipients: formatPhone(artistPhone),
+                msg: artistMsg,
+            });
+        }
+
+        // Send confirmation to customer
+        const customerMsg = `שלום! 💅
+התור שלך אושר:
+${booking.service.name}
+${dateFormatted} בשעה ${booking.start_time}
+
+לביטול או שינוי: ${process.env.NEXT_PUBLIC_SITE_URL || "https://liat-nine.vercel.app"}/my-bookings
+
+${businessName}`;
+
+        await sendSms({
+            sender: businessName,
+            recipients: clientPhone,
+            msg: customerMsg,
+        });
+    } catch (error) {
+        console.error("Error sending booking notifications:", error);
+        // Don't throw - we don't want to fail the booking if SMS fails
+    }
+}
 
 // GET /api/bookings - Get bookings (with optional filters)
 export async function GET(request: Request) {
     try {
-        const supabase = await getSupabase();
+        const supabase = createAdminClient();
         const { searchParams } = new URL(request.url);
         const date = searchParams.get("date");
-        const status = searchParams.get("status") as BookingStatus | null;
+        const status = searchParams.get("status");
         const clientId = searchParams.get("clientId");
+        const phone = searchParams.get("phone");
 
         let query = supabase
             .from("bookings")
             .select(`
-        *,
-        client:clients(*),
-        service:services(*)
-      `)
+                *,
+                client:clients(*),
+                service:services(*)
+            `)
             .order("date", { ascending: true })
             .order("start_time", { ascending: true });
 
         if (date) query = query.eq("date", date);
         if (status) query = query.eq("status", status);
         if (clientId) query = query.eq("client_id", clientId);
+
+        // Filter by phone (for customer portal)
+        if (phone) {
+            const { data: client } = await supabase
+                .from("clients")
+                .select("id")
+                .eq("phone", formatPhone(phone))
+                .single();
+
+            if (client) {
+                query = query.eq("client_id", client.id);
+            } else {
+                return NextResponse.json([]);
+            }
+        }
 
         const { data, error } = await query;
         if (error) throw error;
@@ -40,7 +138,7 @@ export async function GET(request: Request) {
 // POST /api/bookings - Create a new booking
 export async function POST(request: Request) {
     try {
-        const supabase = await getSupabase();
+        const supabase = createAdminClient();
         const body = await request.json();
         const { phone, name, serviceId, date, startTime, notes } = body;
 
@@ -82,16 +180,17 @@ export async function POST(request: Request) {
         }
 
         // Find or create client
+        const formattedPhone = formatPhone(phone);
         let { data: client } = await supabase
             .from("clients")
             .select("*")
-            .eq("phone", phone)
+            .eq("phone", formattedPhone)
             .single();
 
         if (!client) {
             const { data: newClient, error: clientError } = await supabase
                 .from("clients")
-                .insert({ phone, name })
+                .insert({ phone: formattedPhone, name: name || formattedPhone })
                 .select()
                 .single();
             if (clientError) throw clientError;
@@ -120,8 +219,11 @@ export async function POST(request: Request) {
             booking_id: booking.id,
             action: "created",
             actor: "client",
-            details: { phone, serviceId, date, startTime },
+            details: { phone: formattedPhone, serviceId, date, startTime },
         });
+
+        // Send SMS notifications (async, don't wait)
+        sendBookingNotifications(supabase, booking);
 
         return NextResponse.json(booking, { status: 201 });
     } catch (error) {
