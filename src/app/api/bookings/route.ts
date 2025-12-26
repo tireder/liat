@@ -31,6 +31,7 @@ async function sendBookingNotifications(
     booking: {
         date: string;
         start_time: string;
+        notes?: string | null;
         client: { phone: string; name?: string };
         service: { name: string };
     }
@@ -51,10 +52,15 @@ async function sendBookingNotifications(
 
         // Send notification to artist
         if (artistPhone) {
-            const artistMsg = `תור חדש! 📅
+            let artistMsg = `תור חדש! 📅
 ${booking.service.name}
 ${dateFormatted} בשעה ${booking.start_time}
 ${clientName} - ${clientPhone}`;
+
+            // Add notes if present
+            if (booking.notes) {
+                artistMsg += `\n📝 ${booking.notes}`;
+            }
 
             await sendSms({
                 sender: businessName,
