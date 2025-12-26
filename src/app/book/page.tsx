@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon, XIcon } from "@/components/icons";
 import StepIndicator from "@/components/booking/StepIndicator";
@@ -24,6 +24,11 @@ export interface BookingData {
     notes: string;
 }
 
+interface SiteSettings {
+    address: string;
+    businessName: string;
+}
+
 const initialBookingData: BookingData = {
     phone: "",
     name: "",
@@ -42,6 +47,25 @@ export default function BookingPage() {
     const [currentStep, setCurrentStep] = useState(0);
     const [bookingData, setBookingData] = useState<BookingData>(initialBookingData);
     const [isComplete, setIsComplete] = useState(false);
+    const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+    useEffect(() => {
+        async function fetchSettings() {
+            try {
+                const res = await fetch("/api/settings");
+                if (res.ok) {
+                    const data = await res.json();
+                    setSettings({
+                        address: data.address || "",
+                        businessName: data.business_name || "ליאת",
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching settings:", error);
+            }
+        }
+        fetchSettings();
+    }, []);
 
     const updateBookingData = (data: Partial<BookingData>) => {
         setBookingData((prev) => ({ ...prev, ...data }));
@@ -83,7 +107,11 @@ export default function BookingPage() {
     if (isComplete) {
         return (
             <div className={styles.page}>
-                <SuccessStep bookingData={bookingData} />
+                <SuccessStep
+                    bookingData={bookingData}
+                    address={settings?.address}
+                    businessName={settings?.businessName}
+                />
             </div>
         );
     }
@@ -146,6 +174,7 @@ export default function BookingPage() {
                         bookingData={bookingData}
                         onConfirm={handleConfirm}
                         onBack={prevStep}
+                        address={settings?.address}
                     />
                 )}
             </main>

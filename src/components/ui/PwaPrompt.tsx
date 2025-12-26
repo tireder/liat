@@ -78,7 +78,7 @@ export default function PwaPrompt() {
 
                 <div className={styles.actions}>
                     <button className={styles.installBtn} onClick={handleInstall}>
-                        הוסיפי לתליקציות
+                        הוסיפי לאפליקציות
                     </button>
                     <button className={styles.laterBtn} onClick={handleDismiss}>
                         אולי אחר כך

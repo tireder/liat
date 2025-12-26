@@ -8,6 +8,7 @@ interface ConfirmStepProps {
     bookingData: BookingData;
     onConfirm: () => void;
     onBack: () => void;
+    address?: string;
 }
 
 const HEBREW_DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
@@ -20,6 +21,7 @@ export default function ConfirmStep({
     bookingData,
     onConfirm,
     onBack,
+    address,
 }: ConfirmStepProps) {
     const formatDate = () => {
         if (!bookingData.date) return "";
@@ -80,15 +82,17 @@ export default function ConfirmStep({
                     </div>
                 </div>
 
-                <div className={styles.cardRow}>
-                    <div className={styles.cardIcon}>
-                        <MapPinIcon size={20} color="var(--color-primary-dark)" />
+                {address && (
+                    <div className={styles.cardRow}>
+                        <div className={styles.cardIcon}>
+                            <MapPinIcon size={20} color="var(--color-primary-dark)" />
+                        </div>
+                        <div className={styles.cardContent}>
+                            <span className={styles.cardLabel}>מיקום</span>
+                            <span className={styles.cardValue}>{address}</span>
+                        </div>
                     </div>
-                    <div className={styles.cardContent}>
-                        <span className={styles.cardLabel}>מיקום</span>
-                        <span className={styles.cardValue}>רחוב הרצל 50, תל אביב</span>
-                    </div>
-                </div>
+                )}
 
                 {bookingData.notes && (
                     <>

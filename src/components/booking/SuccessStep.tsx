@@ -7,6 +7,8 @@ import styles from "./SuccessStep.module.css";
 
 interface SuccessStepProps {
     bookingData: BookingData;
+    address?: string;
+    businessName?: string;
 }
 
 const HEBREW_DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
@@ -15,7 +17,7 @@ const HEBREW_MONTHS = [
     "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"
 ];
 
-export default function SuccessStep({ bookingData }: SuccessStepProps) {
+export default function SuccessStep({ bookingData, address, businessName }: SuccessStepProps) {
     const formatDate = () => {
         if (!bookingData.date) return "";
         const d = new Date(bookingData.date);
@@ -42,8 +44,8 @@ VERSION:2.0
 BEGIN:VEVENT
 DTSTART:${formatICSDate(startDate)}
 DTEND:${formatICSDate(endDate)}
-SUMMARY:${bookingData.serviceName} - ליאת
-LOCATION:רחוב הרצל 50, תל אביב
+SUMMARY:${bookingData.serviceName} - ${businessName || "ליאת"}
+LOCATION:${address || ""}
 DESCRIPTION:תור לטיפול ציפורניים
 END:VEVENT
 END:VCALENDAR`;

@@ -370,12 +370,12 @@ function BookingsView() {
         fetchBookings();
     }, [fetchBookings]);
 
-    async function updateBookingStatus(bookingId: string, newStatus: string) {
+    async function updateBookingStatus(bookingId: string, newStatus: string, previousStatus: string) {
         try {
             const res = await fetch("/api/admin/bookings", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ bookingId, status: newStatus }),
+                body: JSON.stringify({ bookingId, status: newStatus, previousStatus }),
             });
             if (res.ok) {
                 showToast("הסטטוס עודכן בהצלחה", "success");
@@ -456,7 +456,7 @@ function BookingsView() {
                                 )}
                                 <select
                                     value={booking.status}
-                                    onChange={(e) => updateBookingStatus(booking.id, e.target.value)}
+                                    onChange={(e) => updateBookingStatus(booking.id, e.target.value, booking.status)}
                                     className={styles.statusSelect}
                                     data-status={booking.status}
                                 >
