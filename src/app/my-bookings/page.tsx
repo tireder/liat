@@ -232,12 +232,14 @@ export default function MyBookingsPage() {
 
     const upcomingBookings = bookings.filter(b => {
         const bookingDate = new Date(`${b.date}T${b.start_time}`);
-        return bookingDate > new Date() && b.status === "confirmed";
+        // Show confirmed, pending, or pending_change bookings that are in the future
+        return bookingDate > new Date() && ["confirmed", "pending", "pending_change"].includes(b.status);
     });
 
     const pastBookings = bookings.filter(b => {
         const bookingDate = new Date(`${b.date}T${b.start_time}`);
-        return bookingDate <= new Date() || b.status !== "confirmed";
+        // Past bookings OR cancelled/completed/no_show
+        return bookingDate <= new Date() || ["cancelled", "completed", "no_show"].includes(b.status);
     });
 
     const isValidPhone = phone.replace(/\D/g, "").length >= 9;
@@ -431,9 +433,10 @@ export default function MyBookingsPage() {
                                                 {booking.status === "cancelled" && "בוטל"}
                                                 {booking.status === "completed" && "הושלם"}
                                                 {booking.status === "no_show" && "לא הגיעה"}
-                                                {booking.status === "confirmed" && "הושלם"}
-                                                {booking.status === "pending" && "ממתין"}
-                                                {booking.status === "pending_change" && "ממתין לאישור"}
+                                                {booking.status === "confirmed" && new Date(`${booking.date}T${booking.start_time}`) <= new Date() && "הושלם"}
+                                                {booking.status === "confirmed" && new Date(`${booking.date}T${booking.start_time}`) > new Date() && "מאושר"}
+                                                {booking.status === "pending" && "ממתין לאישור"}
+                                                {booking.status === "pending_change" && "ממתין לשינוי"}
                                             </span>
                                         </div>
                                     ))}
