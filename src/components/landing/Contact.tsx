@@ -200,10 +200,11 @@ export default function Contact() {
                     <div className={styles.mapContainer}>
                         <iframe
                             className={styles.mapEmbed}
-                            src={`https://www.openstreetmap.org/export/embed.html?bbox=34.76,32.07,34.78,32.09&layer=mapnik&marker=32.08,34.77`}
+                            src={`https://maps.google.com/maps?q=${encodeURIComponent(settings?.address || "רחוב הרצל 50 תל אביב")}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                             loading="lazy"
                             referrerPolicy="no-referrer-when-downgrade"
                             title="מיקום הסלון"
+                            allowFullScreen
                         />
                         <div className={styles.mapButtons}>
                             <a

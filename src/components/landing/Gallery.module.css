@@ -63,9 +63,18 @@
     cursor: pointer;
     border: none;
     padding: 0;
-    background: none;
+    background: var(--color-accent);
     animation: fadeInUp 0.5s ease forwards;
     opacity: 0;
+}
+
+.image {
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.imageCard:hover .image {
+    transform: scale(1.05);
 }
 
 @keyframes fadeInUp {
@@ -117,6 +126,13 @@
 
 .imageCard:hover .imageOverlay {
     opacity: 1;
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--foreground-muted);
 }
 
 /* View All */
@@ -187,22 +203,14 @@
 }
 
 .lightboxContent {
-    max-width: 90vw;
-    max-height: 80vh;
+    position: relative;
+    width: 90vw;
+    height: 80vh;
+    max-width: 800px;
 }
 
 .lightboxImage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-    width: 300px;
-    height: 300px;
-    background: var(--color-accent);
-    border-radius: var(--radius-xl);
-    color: var(--foreground);
-    font-weight: 500;
+    object-fit: contain;
 }
 
 /* Responsive */

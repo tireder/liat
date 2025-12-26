@@ -1,20 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { NailPolishIcon, SearchIcon, XIcon, ArrowLeftIcon } from "@/components/icons";
 import styles from "./Gallery.module.css";
 
-const galleryImages = [
-    { id: "1", alt: "עיצוב פרחוני עדין" },
-    { id: "2", alt: "ג׳ל ורוד קלאסי" },
-    { id: "3", alt: "עיצוב גיאומטרי" },
-    { id: "4", alt: "צרפתי מודרני" },
-    { id: "5", alt: "נוצצים לאירוע" },
-    { id: "6", alt: "נודי אלגנטי" },
-];
+interface GalleryImage {
+    id: string;
+    url: string;
+    alt: string | null;
+    sort_order: number;
+}
 
 export default function Gallery() {
-    const [activeImage, setActiveImage] = useState<string | null>(null);
+    const [images, setImages] = useState<GalleryImage[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [activeImage, setActiveImage] = useState<GalleryImage | null>(null);
+
+    useEffect(() => {
+        async function fetchGallery() {
+            try {
+                const res = await fetch("/api/gallery");
+                if (res.ok) {
+                    const data = await res.json();
+                    // Only show first 6 images on landing page
+                    setImages(data.slice(0, 6));
+                }
+            } catch (error) {
+                console.error("Error fetching gallery:", error);
+            }
+            setLoading(false);
+        }
+        fetchGallery();
+    }, []);
+
+    // Don't render section if no images
+    if (!loading && images.length === 0) {
+        return null;
+    }
 
     return (
         <section className={styles.section} id="gallery">
@@ -33,26 +56,32 @@ export default function Gallery() {
                 </header>
 
                 {/* Gallery Grid */}
-                <div className={styles.grid}>
-                    {galleryImages.map((image, index) => (
-                        <button
-                            key={image.id}
-                            className={styles.imageCard}
-                            onClick={() => setActiveImage(image.id)}
-                            style={{ animationDelay: `${index * 0.08}s` }}
-                            aria-label={`צפייה ב${image.alt}`}
-                        >
-                            {/* Placeholder */}
-                            <div className={styles.imagePlaceholder}>
-                                <NailPolishIcon size={28} color="var(--color-primary)" />
-                                <span className={styles.placeholderText}>{image.alt}</span>
-                            </div>
-                            <div className={styles.imageOverlay}>
-                                <SearchIcon size={24} color="white" />
-                            </div>
-                        </button>
-                    ))}
-                </div>
+                {loading ? (
+                    <div className={styles.loading}>טוען...</div>
+                ) : (
+                    <div className={styles.grid}>
+                        {images.map((image, index) => (
+                            <button
+                                key={image.id}
+                                className={styles.imageCard}
+                                onClick={() => setActiveImage(image)}
+                                style={{ animationDelay: `${index * 0.08}s` }}
+                                aria-label={`צפייה ב${image.alt || "תמונה"}`}
+                            >
+                                <Image
+                                    src={image.url}
+                                    alt={image.alt || "עבודה"}
+                                    fill
+                                    sizes="(max-width: 600px) 50vw, 33vw"
+                                    className={styles.image}
+                                />
+                                <div className={styles.imageOverlay}>
+                                    <SearchIcon size={24} color="white" />
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* View All Link */}
                 <div className={styles.viewAll}>
@@ -73,13 +102,14 @@ export default function Gallery() {
                     >
                         <XIcon size={24} />
                     </button>
-                    <div className={styles.lightboxContent}>
-                        <div className={styles.lightboxImage}>
-                            <NailPolishIcon size={64} color="var(--color-primary)" />
-                            <span>
-                                {galleryImages.find((img) => img.id === activeImage)?.alt}
-                            </span>
-                        </div>
+                    <div className={styles.lightboxContent} onClick={(e) => e.stopPropagation()}>
+                        <Image
+                            src={activeImage.url}
+                            alt={activeImage.alt || "עבודה"}
+                            fill
+                            sizes="100vw"
+                            className={styles.lightboxImage}
+                        />
                     </div>
                 </div>
             )}
