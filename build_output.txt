@@ -1,0 +1,44 @@
+﻿
+> liart@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.1 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 1283.8ms
+  Running TypeScript ...
+  Collecting page data using 27 workers ...
+  Generating static pages using 27 workers (0/20) ...
+  Generating static pages using 27 workers (5/20) 
+  Generating static pages using 27 workers (10/20) 
+  Generating static pages using 27 workers (15/20) 
+Γ£ô Generating static pages using 27 workers (20/20) in 438.0ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /admin
+Γö£ Γùï /admin-login
+Γö£ ╞Æ /api/admin/bookings
+Γö£ ╞Æ /api/admin/courses
+Γö£ ╞Æ /api/admin/dashboard
+Γö£ ╞Æ /api/admin/holidays
+Γö£ ╞Æ /api/admin/services
+Γö£ ╞Æ /api/admin/settings
+Γö£ ╞Æ /api/auth/send-otp
+Γö£ ╞Æ /api/bookings
+Γö£ ╞Æ /api/bookings/[id]
+Γö£ ╞Æ /api/bookings/available
+Γö£ ╞Æ /api/courses
+Γö£ ╞Æ /api/courses/[id]/register
+Γö£ ╞Æ /api/services
+Γö£ ╞Æ /api/settings
+Γö£ Γùï /book
+Γöö Γùï /courses
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

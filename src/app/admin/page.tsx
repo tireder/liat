@@ -1,0 +1,1304 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createBrowserClient } from "@supabase/ssr";
+import {
+    CalendarIcon, ClockIcon, CheckIcon, XIcon,
+    NailPolishIcon, HomeIcon, SettingsIcon, LogoutIcon, EditIcon, TrashIcon, PlusIcon, BookIcon, UsersIcon
+} from "@/components/icons";
+import { ToastProvider, useToast } from "@/components/ui/Toast";
+import styles from "./page.module.css";
+
+interface DashboardData {
+    todayBookings: Array<{
+        id: string;
+        time: string;
+        client: string;
+        phone: string;
+        service: string;
+        status: string;
+    }>;
+    pendingApprovals: Array<{
+        id: string;
+        client: string;
+        originalDate: string;
+        requestedDate: string | null;
+        requestedTime: string | null;
+        type: string;
+    }>;
+    weekStats: {
+        total: number;
+        confirmed: number;
+        completed: number;
+        cancelled: number;
+        pending: number;
+    };
+}
+
+interface Booking {
+    id: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+    status: string;
+    notes: string | null;
+    client: { id: string; name: string | null; phone: string } | null;
+    service: { id: string; name: string; duration: number; price: number } | null;
+}
+
+interface Service {
+    id: string;
+    name: string;
+    description: string | null;
+    duration: number;
+    price: number;
+    active: boolean;
+    sort_order: number;
+}
+
+export default function AdminDashboard() {
+    return (
+        <ToastProvider>
+            <AdminContent />
+        </ToastProvider>
+    );
+}
+
+function AdminContent() {
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<"dashboard" | "bookings" | "services" | "courses" | "settings">("dashboard");
+    const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [authChecked, setAuthChecked] = useState(false);
+
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    // Check authentication on mount
+    useEffect(() => {
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.replace("/admin-login");
+            } else {
+                setAuthChecked(true);
+            }
+        }
+        checkAuth();
+    }, [router, supabase.auth]);
+
+    async function handleLogout() {
+        await supabase.auth.signOut();
+        router.replace("/admin-login");
+    }
+
+    useEffect(() => {
+        if (authChecked && activeTab === "dashboard") {
+            fetchDashboard();
+        }
+    }, [activeTab, authChecked]);
+
+    async function fetchDashboard() {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/dashboard");
+            if (res.ok) {
+                const data = await res.json();
+                setDashboardData(data);
+            }
+        } catch (error) {
+            console.error("Error fetching dashboard:", error);
+        }
+        setLoading(false);
+    }
+
+    async function handleApproval(bookingId: string, action: "approve" | "deny") {
+        try {
+            const res = await fetch("/api/admin/dashboard", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ bookingId, action }),
+            });
+            if (res.ok) {
+                fetchDashboard(); // Refresh
+            }
+        } catch (error) {
+            console.error("Error handling approval:", error);
+        }
+    }
+
+    const todayBookings = dashboardData?.todayBookings || [];
+    const pendingApprovals = dashboardData?.pendingApprovals || [];
+    const weekStats = dashboardData?.weekStats || { total: 0, confirmed: 0, completed: 0, cancelled: 0, pending: 0 };
+
+    // Don't render until auth is verified
+    if (!authChecked) {
+        return (
+            <div className={styles.page}>
+                <div className={styles.loading}>בודק הרשאות...</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.page}>
+            {/* Header */}
+            <header className={styles.header}>
+                <div className={styles.headerContent}>
+                    <NailPolishIcon size={24} color="var(--color-primary)" />
+                    <h1 className={styles.headerTitle}>ניהול</h1>
+                </div>
+                <div className={styles.headerActions}>
+                    <Link href="/" className={styles.homeBtn}>
+                        <HomeIcon size={20} />
+                    </Link>
+                    <button onClick={handleLogout} className={styles.logoutBtn} title="יציאה">
+                        <LogoutIcon size={20} />
+                    </button>
+                </div>
+            </header>
+
+            {/* Main Content */}
+            <main className={styles.content}>
+                {activeTab === "dashboard" && (
+                    <>
+                        {loading ? (
+                            <div className={styles.loading}>טוען...</div>
+                        ) : (
+                            <>
+                                {/* Stats Grid */}
+                                <section className={styles.stats}>
+                                    <div className={styles.statCard}>
+                                        <span className={styles.statNumber}>{todayBookings.length}</span>
+                                        <span className={styles.statLabel}>תורים היום</span>
+                                    </div>
+                                    <div className={styles.statCard} data-highlight={pendingApprovals.length > 0}>
+                                        <span className={styles.statNumber}>{pendingApprovals.length}</span>
+                                        <span className={styles.statLabel}>ממתינים לאישור</span>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <span className={styles.statNumber}>{weekStats.confirmed}</span>
+                                        <span className={styles.statLabel}>השבוע</span>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <span className={styles.statNumber}>{weekStats.total}</span>
+                                        <span className={styles.statLabel}>סה״כ החודש</span>
+                                    </div>
+                                </section>
+
+                                {/* Pending Approvals */}
+                                {pendingApprovals.length > 0 && (
+                                    <section className={styles.section}>
+                                        <h2 className={styles.sectionTitle}>
+                                            <span className={styles.alertDot} />
+                                            ממתינים לאישור
+                                        </h2>
+                                        <div className={styles.pendingList}>
+                                            {pendingApprovals.map((item) => (
+                                                <div key={item.id} className={styles.pendingCard}>
+                                                    <div className={styles.pendingInfo}>
+                                                        <span className={styles.pendingClient}>{item.client}</span>
+                                                        <span className={styles.pendingType}>
+                                                            {item.type === "cancel" ? "בקשת ביטול" : "בקשת שינוי מועד"}
+                                                        </span>
+                                                        <span className={styles.pendingDates}>
+                                                            {item.type === "reschedule"
+                                                                ? `${item.originalDate} ← ${item.requestedDate}`
+                                                                : item.originalDate}
+                                                        </span>
+                                                    </div>
+                                                    <div className={styles.pendingActions}>
+                                                        <button
+                                                            className={styles.approveBtn}
+                                                            aria-label="אישור"
+                                                            onClick={() => handleApproval(item.id, "approve")}
+                                                        >
+                                                            <CheckIcon size={18} />
+                                                        </button>
+                                                        <button
+                                                            className={styles.denyBtn}
+                                                            aria-label="דחייה"
+                                                            onClick={() => handleApproval(item.id, "deny")}
+                                                        >
+                                                            <XIcon size={18} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
+
+                                {/* Today's Bookings */}
+                                <section className={styles.section}>
+                                    <h2 className={styles.sectionTitle}>תורים להיום</h2>
+                                    {todayBookings.length === 0 ? (
+                                        <p style={{ color: "var(--foreground-muted)", textAlign: "center" }}>אין תורים להיום</p>
+                                    ) : (
+                                        <div className={styles.bookingList}>
+                                            {todayBookings.map((booking) => (
+                                                <div key={booking.id} className={styles.bookingCard}>
+                                                    <div className={styles.bookingTime}>{booking.time}</div>
+                                                    <div className={styles.bookingInfo}>
+                                                        <span className={styles.bookingClient}>{booking.client}</span>
+                                                        <span className={styles.bookingService}>{booking.service}</span>
+                                                    </div>
+                                                    <div className={styles.bookingMeta}>
+                                                        <a href={`tel:${booking.phone}`} className={styles.bookingPhone}>
+                                                            {booking.phone}
+                                                        </a>
+                                                        <span
+                                                            className={styles.bookingStatus}
+                                                            data-status={booking.status}
+                                                        >
+                                                            {booking.status === "confirmed" ? "מאושר" : "ממתין"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+                            </>
+                        )}
+                    </>
+                )}
+
+                {activeTab === "bookings" && <BookingsView />}
+                {activeTab === "services" && <ServicesView />}
+                {activeTab === "courses" && <CoursesView />}
+                {activeTab === "settings" && <SettingsView />}
+            </main>
+
+            {/* Bottom Navigation */}
+            <nav className={styles.bottomNav}>
+                <button
+                    className={`${styles.navItem} ${activeTab === "dashboard" ? styles.active : ""}`}
+                    onClick={() => setActiveTab("dashboard")}
+                >
+                    <CalendarIcon size={22} />
+                    <span>לוח בקרה</span>
+                </button>
+                <button
+                    className={`${styles.navItem} ${activeTab === "bookings" ? styles.active : ""}`}
+                    onClick={() => setActiveTab("bookings")}
+                >
+                    <ClockIcon size={22} />
+                    <span>תורים</span>
+                </button>
+                <button
+                    className={`${styles.navItem} ${activeTab === "services" ? styles.active : ""}`}
+                    onClick={() => setActiveTab("services")}
+                >
+                    <NailPolishIcon size={22} />
+                    <span>שירותים</span>
+                </button>
+                <button
+                    className={`${styles.navItem} ${activeTab === "courses" ? styles.active : ""}`}
+                    onClick={() => setActiveTab("courses")}
+                >
+                    <BookIcon size={22} />
+                    <span>קורסים</span>
+                </button>
+                <button
+                    className={`${styles.navItem} ${activeTab === "settings" ? styles.active : ""}`}
+                    onClick={() => setActiveTab("settings")}
+                >
+                    <SettingsIcon size={22} />
+                    <span>הגדרות</span>
+                </button>
+            </nav>
+        </div>
+    );
+}
+
+// Bookings View Component - Now fetches real data
+function BookingsView() {
+    const { showToast } = useToast();
+    const [filter, setFilter] = useState<"all" | "confirmed" | "pending" | "cancelled" | "completed">("all");
+    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchBookings = useCallback(async () => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (filter !== "all") {
+                params.set("status", filter);
+            }
+            const res = await fetch(`/api/admin/bookings?${params.toString()}`);
+            if (res.ok) {
+                const data = await res.json();
+                setBookings(data);
+            }
+        } catch (error) {
+            console.error("Error fetching bookings:", error);
+            showToast("שגיאה בטעינת התורים", "error");
+        }
+        setLoading(false);
+    }, [filter, showToast]);
+
+    useEffect(() => {
+        fetchBookings();
+    }, [fetchBookings]);
+
+    async function updateBookingStatus(bookingId: string, newStatus: string) {
+        try {
+            const res = await fetch("/api/admin/bookings", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ bookingId, status: newStatus }),
+            });
+            if (res.ok) {
+                showToast("הסטטוס עודכן בהצלחה", "success");
+                fetchBookings();
+            } else {
+                showToast("שגיאה בעדכון הסטטוס", "error");
+            }
+        } catch (error) {
+            console.error("Error updating booking:", error);
+            showToast("שגיאה בעדכון הסטטוס", "error");
+        }
+    }
+
+    function formatDate(dateStr: string): string {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit" });
+    }
+
+    function getStatusLabel(status: string): string {
+        const labels: Record<string, string> = {
+            confirmed: "מאושר",
+            pending: "ממתין",
+            pending_change: "ממתין לאישור",
+            cancelled: "בוטל",
+            completed: "הושלם",
+            no_show: "לא הגיע",
+        };
+        return labels[status] || status;
+    }
+
+    return (
+        <div className={styles.viewContainer}>
+            <div className={styles.filters}>
+                {[
+                    { key: "all", label: "הכל" },
+                    { key: "confirmed", label: "מאושר" },
+                    { key: "pending", label: "ממתין" },
+                    { key: "completed", label: "הושלם" },
+                    { key: "cancelled", label: "בוטל" },
+                ].map((f) => (
+                    <button
+                        key={f.key}
+                        className={`${styles.filterBtn} ${filter === f.key ? styles.active : ""}`}
+                        onClick={() => setFilter(f.key as typeof filter)}
+                    >
+                        {f.label}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <div className={styles.loading}>טוען תורים...</div>
+            ) : bookings.length === 0 ? (
+                <p style={{ color: "var(--foreground-muted)", textAlign: "center", padding: "2rem" }}>
+                    אין תורים להצגה
+                </p>
+            ) : (
+                <div className={styles.bookingList}>
+                    {bookings.map((booking) => (
+                        <div key={booking.id} className={styles.bookingCard}>
+                            <div className={styles.bookingDate}>
+                                <span>{formatDate(booking.date)}</span>
+                                <span>{booking.start_time.slice(0, 5)}</span>
+                            </div>
+                            <div className={styles.bookingInfo}>
+                                <span className={styles.bookingClient}>
+                                    {booking.client?.name || booking.client?.phone || "לקוח לא ידוע"}
+                                </span>
+                                <span className={styles.bookingService}>
+                                    {booking.service?.name || "שירות לא ידוע"}
+                                </span>
+                            </div>
+                            <div className={styles.bookingMeta}>
+                                {booking.client?.phone && (
+                                    <a href={`tel:${booking.client.phone}`} className={styles.bookingPhone}>
+                                        {booking.client.phone}
+                                    </a>
+                                )}
+                                <select
+                                    value={booking.status}
+                                    onChange={(e) => updateBookingStatus(booking.id, e.target.value)}
+                                    className={styles.statusSelect}
+                                    data-status={booking.status}
+                                >
+                                    <option value="pending">ממתין</option>
+                                    <option value="confirmed">מאושר</option>
+                                    <option value="completed">הושלם</option>
+                                    <option value="cancelled">בוטל</option>
+                                    <option value="no_show">לא הגיע</option>
+                                </select>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Services View Component - Now fetches real data with CRUD
+function ServicesView() {
+    const { showToast } = useToast();
+    const [services, setServices] = useState<Service[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [editingService, setEditingService] = useState<Service | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        duration: "60",
+        price: "100",
+        active: true,
+    });
+
+    const fetchServices = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/services");
+            if (res.ok) {
+                const data = await res.json();
+                setServices(data);
+            }
+        } catch (error) {
+            console.error("Error fetching services:", error);
+            showToast("שגיאה בטעינת השירותים", "error");
+        }
+        setLoading(false);
+    }, [showToast]);
+
+    useEffect(() => {
+        fetchServices();
+    }, [fetchServices]);
+
+    function openAddModal() {
+        setEditingService(null);
+        setFormData({
+            name: "",
+            description: "",
+            duration: "60",
+            price: "100",
+            active: true,
+        });
+        setIsModalOpen(true);
+    }
+
+    function openEditModal(service: Service) {
+        setEditingService(service);
+        setFormData({
+            name: service.name,
+            description: service.description || "",
+            duration: service.duration.toString(),
+            price: service.price.toString(),
+            active: service.active,
+        });
+        setIsModalOpen(true);
+    }
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        try {
+            const url = "/api/admin/services";
+            const method = editingService ? "PUT" : "POST";
+            const body = editingService
+                ? { id: editingService.id, ...formData }
+                : formData;
+
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+
+            if (res.ok) {
+                showToast(editingService ? "השירות עודכן בהצלחה" : "השירות נוסף בהצלחה", "success");
+                setIsModalOpen(false);
+                fetchServices();
+            } else {
+                const error = await res.json();
+                showToast(error.error || "שגיאה בשמירה", "error");
+            }
+        } catch (error) {
+            console.error("Error saving service:", error);
+            showToast("שגיאה בשמירה", "error");
+        }
+    }
+
+    async function toggleServiceActive(service: Service) {
+        try {
+            const res = await fetch("/api/admin/services", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: service.id, active: !service.active }),
+            });
+            if (res.ok) {
+                showToast(service.active ? "השירות הושבת" : "השירות הופעל", "success");
+                fetchServices();
+            }
+        } catch (error) {
+            console.error("Error toggling service:", error);
+            showToast("שגיאה בעדכון השירות", "error");
+        }
+    }
+
+    async function deleteService(service: Service) {
+        if (!confirm(`האם למחוק את השירות "${service.name}"?`)) return;
+        try {
+            const res = await fetch(`/api/admin/services?id=${service.id}`, {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                showToast("השירות נמחק", "success");
+                fetchServices();
+            } else {
+                const error = await res.json();
+                showToast(error.error || "שגיאה במחיקה", "error");
+            }
+        } catch (error) {
+            console.error("Error deleting service:", error);
+            showToast("שגיאה במחיקה", "error");
+        }
+    }
+
+    return (
+        <div className={styles.viewContainer}>
+            <div className={styles.viewHeader}>
+                <h2>שירותים</h2>
+                <button
+                    className="btn btn-primary"
+                    style={{ padding: "0.625rem 1rem", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
+                    onClick={openAddModal}
+                >
+                    <PlusIcon size={16} />
+                    הוספה
+                </button>
+            </div>
+
+            {loading ? (
+                <div className={styles.loading}>טוען שירותים...</div>
+            ) : services.length === 0 ? (
+                <p style={{ color: "var(--foreground-muted)", textAlign: "center", padding: "2rem" }}>
+                    אין שירותים. לחצי על &quot;הוספה&quot; כדי להוסיף שירות חדש.
+                </p>
+            ) : (
+                <div className={styles.serviceList}>
+                    {services.map((service) => (
+                        <div key={service.id} className={styles.serviceCard} data-inactive={!service.active}>
+                            <div className={styles.serviceInfo}>
+                                <span className={styles.serviceName}>{service.name}</span>
+                                <span className={styles.serviceMeta}>
+                                    {service.duration} דק׳ • ₪{service.price}
+                                </span>
+                            </div>
+                            <div className={styles.serviceActions}>
+                                <label className={styles.toggle}>
+                                    <input
+                                        type="checkbox"
+                                        checked={service.active}
+                                        onChange={() => toggleServiceActive(service)}
+                                    />
+                                    <span className={styles.toggleSlider} />
+                                </label>
+                                <button className={styles.editBtn} onClick={() => openEditModal(service)}>
+                                    <EditIcon size={16} />
+                                </button>
+                                <button className={styles.deleteBtn} onClick={() => deleteService(service)}>
+                                    <TrashIcon size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Add/Edit Modal */}
+            {isModalOpen && (
+                <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>
+                            {editingService ? "עריכת שירות" : "הוספת שירות"}
+                        </h3>
+                        <form onSubmit={handleSubmit} className={styles.modalForm}>
+                            <div className={styles.formField}>
+                                <label>שם השירות</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    required
+                                    className={styles.textInput}
+                                />
+                            </div>
+                            <div className={styles.formField}>
+                                <label>תיאור (אופציונלי)</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                    className={styles.textInput}
+                                    rows={3}
+                                />
+                            </div>
+                            <div className={styles.formRow}>
+                                <div className={styles.formField}>
+                                    <label>משך (דקות)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.duration}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                                        required
+                                        min="5"
+                                        className={styles.numberInput}
+                                    />
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>מחיר (₪)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.price}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                                        required
+                                        min="0"
+                                        className={styles.numberInput}
+                                    />
+                                </div>
+                            </div>
+                            <div className={styles.formField}>
+                                <label className={styles.checkboxLabel}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.active}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                                    />
+                                    שירות פעיל
+                                </label>
+                            </div>
+                            <div className={styles.modalActions}>
+                                <button type="button" className={styles.cancelBtn} onClick={() => setIsModalOpen(false)}>
+                                    ביטול
+                                </button>
+                                <button type="submit" className="btn btn-primary">
+                                    {editingService ? "שמירה" : "הוספה"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Settings View Component
+function SettingsView() {
+    const { showToast } = useToast();
+    const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+    const [hours, setHours] = useState([
+        { day_of_week: 0, day: "ראשון", open_time: "09:00", close_time: "20:00", active: true },
+        { day_of_week: 1, day: "שני", open_time: "09:00", close_time: "20:00", active: true },
+        { day_of_week: 2, day: "שלישי", open_time: "09:00", close_time: "20:00", active: true },
+        { day_of_week: 3, day: "רביעי", open_time: "09:00", close_time: "20:00", active: true },
+        { day_of_week: 4, day: "חמישי", open_time: "09:00", close_time: "20:00", active: true },
+        { day_of_week: 5, day: "שישי", open_time: "09:00", close_time: "14:00", active: true },
+        { day_of_week: 6, day: "שבת", open_time: "", close_time: "", active: false },
+    ]);
+
+    const [holidays, setHolidays] = useState<{ id: string; date: string; reason: string }[]>([]);
+    const [newHoliday, setNewHoliday] = useState({ date: "", reason: "" });
+    const [settings, setSettings] = useState({
+        cancel_hours_before: "24",
+        buffer_minutes: "15",
+        phone: "050-123-4567",
+        address: "רחוב הרצל 50, תל אביב",
+    });
+    const [saving, setSaving] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [editingHours, setEditingHours] = useState<number | null>(null);
+
+    // Load settings from database on mount
+    useEffect(() => {
+        async function loadSettings() {
+            try {
+                // Load settings and operating hours
+                const settingsRes = await fetch("/api/admin/settings");
+                if (settingsRes.ok) {
+                    const data = await settingsRes.json();
+                    if (data.settings) {
+                        setSettings(prev => ({
+                            ...prev,
+                            cancel_hours_before: data.settings.cancel_hours_before || prev.cancel_hours_before,
+                            buffer_minutes: data.settings.buffer_minutes || prev.buffer_minutes,
+                            phone: data.settings.phone || prev.phone,
+                            address: data.settings.address || prev.address,
+                        }));
+                    }
+                    if (data.operatingHours && data.operatingHours.length > 0) {
+                        setHours(data.operatingHours.map((h: { day_of_week: number; open_time: string | null; close_time: string | null; active: boolean }) => ({
+                            day_of_week: h.day_of_week,
+                            day: dayNames[h.day_of_week],
+                            open_time: h.open_time || "09:00",
+                            close_time: h.close_time || "20:00",
+                            active: h.active,
+                        })));
+                    }
+                }
+
+                // Load holidays
+                const holidaysRes = await fetch("/api/admin/holidays");
+                if (holidaysRes.ok) {
+                    const holidaysData = await holidaysRes.json();
+                    setHolidays(holidaysData.map((h: { id: string; date: string; reason: string }) => ({
+                        id: h.id,
+                        date: h.date,
+                        reason: h.reason || "חופשה",
+                    })));
+                }
+            } catch (error) {
+                console.error("Error loading settings:", error);
+            }
+            setLoading(false);
+        }
+        loadSettings();
+    }, []);
+
+    const updateHours = (index: number, field: string, value: string | boolean) => {
+        setHours(prev => prev.map((h, i) => i === index ? { ...h, [field]: value } : h));
+    };
+
+    const addHoliday = () => {
+        if (!newHoliday.date) return;
+        setHolidays(prev => [...prev, {
+            id: Date.now().toString(),
+            date: newHoliday.date,
+            reason: newHoliday.reason || "חופשה"
+        }]);
+        setNewHoliday({ date: "", reason: "" });
+    };
+
+    const removeHoliday = (id: string) => {
+        setHolidays(prev => prev.filter(h => h.id !== id));
+    };
+
+    const saveSettings = async () => {
+        setSaving(true);
+        try {
+            const settingsRes = await fetch("/api/admin/settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    settings,
+                    operatingHours: hours.map(h => ({
+                        day_of_week: h.day_of_week,
+                        open_time: h.active ? h.open_time : null,
+                        close_time: h.active ? h.close_time : null,
+                        active: h.active,
+                    })),
+                }),
+            });
+
+            if (!settingsRes.ok) {
+                throw new Error("Failed to save settings");
+            }
+
+            // Save holidays as blocked slots
+            for (const holiday of holidays) {
+                const holidayRes = await fetch("/api/admin/holidays", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        date: holiday.date,
+                        all_day: true,
+                        reason: holiday.reason,
+                    }),
+                });
+                if (!holidayRes.ok) {
+                    console.error("Failed to save holiday:", holiday.date);
+                }
+            }
+            showToast("השינויים נשמרו בהצלחה", "success");
+        } catch (error) {
+            console.error("Error saving:", error);
+            showToast("שגיאה בשמירת ההגדרות", "error");
+        }
+        setSaving(false);
+    };
+
+    return (
+        <div className={styles.viewContainer}>
+            {loading ? (
+                <div className={styles.loading}>טוען הגדרות...</div>
+            ) : (
+                <>
+                    {/* Operating Hours */}
+                    <div className={styles.settingsSection}>
+                        <h3 className={styles.settingsSectionTitle}>שעות פעילות</h3>
+                        <div className={styles.hoursGrid}>
+                            {hours.map((h, index) => (
+                                <div key={h.day_of_week} className={styles.hoursRow}>
+                                    <label className={styles.hoursToggle}>
+                                        <input
+                                            type="checkbox"
+                                            checked={h.active}
+                                            onChange={(e) => updateHours(index, "active", e.target.checked)}
+                                        />
+                                        <span className={styles.hoursDay}>{h.day}</span>
+                                    </label>
+                                    {h.active ? (
+                                        editingHours === index ? (
+                                            <div className={styles.hoursEdit}>
+                                                <input
+                                                    type="time"
+                                                    value={h.open_time}
+                                                    onChange={(e) => updateHours(index, "open_time", e.target.value)}
+                                                    className={styles.timeInput}
+                                                />
+                                                <span>-</span>
+                                                <input
+                                                    type="time"
+                                                    value={h.close_time}
+                                                    onChange={(e) => updateHours(index, "close_time", e.target.value)}
+                                                    className={styles.timeInput}
+                                                />
+                                                <button
+                                                    className={styles.doneBtn}
+                                                    onClick={() => setEditingHours(null)}
+                                                >
+                                                    ✓
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                className={styles.hoursTime}
+                                                onClick={() => setEditingHours(index)}
+                                            >
+                                                {h.open_time} - {h.close_time}
+                                            </button>
+                                        )
+                                    ) : (
+                                        <span className={styles.hoursClosed}>סגור</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Holidays / Blocked Days */}
+                    <div className={styles.settingsSection}>
+                        <h3 className={styles.settingsSectionTitle}>חופשות וימים חסומים</h3>
+                        <div className={styles.holidayAdd}>
+                            <input
+                                type="date"
+                                value={newHoliday.date}
+                                onChange={(e) => setNewHoliday(prev => ({ ...prev, date: e.target.value }))}
+                                className={styles.dateInput}
+                            />
+                            <input
+                                type="text"
+                                placeholder="סיבה (אופציונלי)"
+                                value={newHoliday.reason}
+                                onChange={(e) => setNewHoliday(prev => ({ ...prev, reason: e.target.value }))}
+                                className={styles.textInput}
+                                style={{ flex: 1 }}
+                            />
+                            <button
+                                className={styles.addHolidayBtn}
+                                onClick={addHoliday}
+                                disabled={!newHoliday.date}
+                            >
+                                +
+                            </button>
+                        </div>
+                        {holidays.length > 0 && (
+                            <div className={styles.holidayList}>
+                                {holidays.map((h) => (
+                                    <div key={h.id} className={styles.holidayItem}>
+                                        <span className={styles.holidayDate}>
+                                            {new Date(h.date).toLocaleDateString("he-IL")}
+                                        </span>
+                                        <span className={styles.holidayReason}>{h.reason}</span>
+                                        <button
+                                            className={styles.removeHolidayBtn}
+                                            onClick={() => removeHoliday(h.id)}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Policy Settings */}
+                    <div className={styles.settingsSection}>
+                        <h3 className={styles.settingsSectionTitle}>מדיניות</h3>
+                        <div className={styles.settingsField}>
+                            <label>שעות לפני שדרוש אישור לביטול</label>
+                            <input
+                                type="number"
+                                value={settings.cancel_hours_before}
+                                onChange={(e) => setSettings(prev => ({ ...prev, cancel_hours_before: e.target.value }))}
+                                className={styles.numberInput}
+                            />
+                        </div>
+                        <div className={styles.settingsField}>
+                            <label>זמן בין תורים (דקות)</label>
+                            <input
+                                type="number"
+                                value={settings.buffer_minutes}
+                                onChange={(e) => setSettings(prev => ({ ...prev, buffer_minutes: e.target.value }))}
+                                className={styles.numberInput}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className={styles.settingsSection}>
+                        <h3 className={styles.settingsSectionTitle}>פרטי קשר</h3>
+                        <div className={styles.settingsField}>
+                            <label>טלפון</label>
+                            <input
+                                type="tel"
+                                value={settings.phone}
+                                onChange={(e) => setSettings(prev => ({ ...prev, phone: e.target.value }))}
+                                className={styles.textInput}
+                            />
+                        </div>
+                        <div className={styles.settingsField}>
+                            <label>כתובת</label>
+                            <input
+                                type="text"
+                                value={settings.address}
+                                onChange={(e) => setSettings(prev => ({ ...prev, address: e.target.value }))}
+                                className={styles.textInput}
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        className="btn btn-primary"
+                        style={{ width: "100%", marginTop: "1rem" }}
+                        onClick={saveSettings}
+                        disabled={saving}
+                    >
+                        {saving ? "שומר..." : "שמירת שינויים"}
+                    </button>
+                </>
+            )}
+        </div>
+    );
+}
+
+// Courses View Component
+interface Course {
+    id: string;
+    name: string;
+    description: string | null;
+    date: string;
+    duration: string;
+    price: number;
+    capacity: number;
+    active: boolean;
+    enrolled: number;
+    waitlist: number;
+}
+
+function CoursesView() {
+    const { showToast } = useToast();
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        date: "",
+        duration: "",
+        price: "0",
+        capacity: "10",
+        active: true,
+    });
+
+    const fetchCourses = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/courses");
+            if (res.ok) {
+                const data = await res.json();
+                setCourses(data);
+            }
+        } catch (error) {
+            console.error("Error fetching courses:", error);
+            showToast("שגיאה בטעינת הקורסים", "error");
+        }
+        setLoading(false);
+    }, [showToast]);
+
+    useEffect(() => {
+        fetchCourses();
+    }, [fetchCourses]);
+
+    function openAddModal() {
+        setEditingCourse(null);
+        setFormData({
+            name: "",
+            description: "",
+            date: "",
+            duration: "4 שעות",
+            price: "0",
+            capacity: "10",
+            active: true,
+        });
+        setIsModalOpen(true);
+    }
+
+    function openEditModal(course: Course) {
+        setEditingCourse(course);
+        setFormData({
+            name: course.name,
+            description: course.description || "",
+            date: course.date,
+            duration: course.duration,
+            price: course.price.toString(),
+            capacity: course.capacity.toString(),
+            active: course.active,
+        });
+        setIsModalOpen(true);
+    }
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        try {
+            const url = "/api/admin/courses";
+            const method = editingCourse ? "PUT" : "POST";
+            const body = editingCourse
+                ? { id: editingCourse.id, ...formData }
+                : formData;
+
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+
+            if (res.ok) {
+                showToast(editingCourse ? "הקורס עודכן בהצלחה" : "הקורס נוסף בהצלחה", "success");
+                setIsModalOpen(false);
+                fetchCourses();
+            } else {
+                const error = await res.json();
+                showToast(error.error || "שגיאה בשמירה", "error");
+            }
+        } catch (error) {
+            console.error("Error saving course:", error);
+            showToast("שגיאה בשמירה", "error");
+        }
+    }
+
+    async function toggleCourseActive(course: Course) {
+        try {
+            const res = await fetch("/api/admin/courses", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: course.id, active: !course.active }),
+            });
+            if (res.ok) {
+                showToast(course.active ? "הקורס הושבת" : "הקורס הופעל", "success");
+                fetchCourses();
+            }
+        } catch (error) {
+            console.error("Error toggling course:", error);
+            showToast("שגיאה בעדכון הקורס", "error");
+        }
+    }
+
+    async function deleteCourse(course: Course) {
+        if (!confirm(`האם למחוק את הקורס "${course.name}"?`)) return;
+        try {
+            const res = await fetch(`/api/admin/courses?id=${course.id}`, {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                showToast("הקורס נמחק", "success");
+                fetchCourses();
+            } else {
+                const error = await res.json();
+                showToast(error.error || "שגיאה במחיקה", "error");
+            }
+        } catch (error) {
+            console.error("Error deleting course:", error);
+            showToast("שגיאה במחיקה", "error");
+        }
+    }
+
+    function formatDate(dateStr: string): string {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("he-IL", { day: "numeric", month: "short", year: "numeric" });
+    }
+
+    return (
+        <div className={styles.viewContainer}>
+            <div className={styles.viewHeader}>
+                <h2>קורסים</h2>
+                <button
+                    className="btn btn-primary"
+                    style={{ padding: "0.625rem 1rem", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
+                    onClick={openAddModal}
+                >
+                    <PlusIcon size={16} />
+                    הוספה
+                </button>
+            </div>
+
+            {loading ? (
+                <div className={styles.loading}>טוען קורסים...</div>
+            ) : courses.length === 0 ? (
+                <p style={{ color: "var(--foreground-muted)", textAlign: "center", padding: "2rem" }}>
+                    אין קורסים. לחצי על &quot;הוספה&quot; כדי להוסיף קורס חדש.
+                </p>
+            ) : (
+                <div className={styles.serviceList}>
+                    {courses.map((course) => (
+                        <div key={course.id} className={styles.serviceCard} data-inactive={!course.active}>
+                            <div className={styles.serviceInfo}>
+                                <span className={styles.serviceName}>{course.name}</span>
+                                <span className={styles.serviceMeta}>
+                                    {formatDate(course.date)} • {course.duration} • ₪{course.price}
+                                </span>
+                                <span className={styles.serviceMeta} style={{ fontSize: "0.75rem", color: "var(--color-primary-dark)" }}>
+                                    {course.enrolled}/{course.capacity} נרשמים
+                                </span>
+                            </div>
+                            <div className={styles.serviceActions}>
+                                <label className={styles.toggle}>
+                                    <input
+                                        type="checkbox"
+                                        checked={course.active}
+                                        onChange={() => toggleCourseActive(course)}
+                                    />
+                                    <span className={styles.toggleSlider} />
+                                </label>
+                                <button className={styles.editBtn} onClick={() => openEditModal(course)}>
+                                    <EditIcon size={16} />
+                                </button>
+                                <button className={styles.deleteBtn} onClick={() => deleteCourse(course)}>
+                                    <TrashIcon size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Add/Edit Modal */}
+            {isModalOpen && (
+                <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>
+                            {editingCourse ? "עריכת קורס" : "הוספת קורס"}
+                        </h3>
+                        <form onSubmit={handleSubmit} className={styles.modalForm}>
+                            <div className={styles.formField}>
+                                <label>שם הקורס</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    required
+                                    className={styles.textInput}
+                                />
+                            </div>
+                            <div className={styles.formField}>
+                                <label>תיאור (אופציונלי)</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                    className={styles.textInput}
+                                    rows={3}
+                                />
+                            </div>
+                            <div className={styles.formRow}>
+                                <div className={styles.formField}>
+                                    <label>תאריך</label>
+                                    <input
+                                        type="date"
+                                        value={formData.date}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                                        required
+                                        className={styles.textInput}
+                                    />
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>משך (טקסט)</label>
+                                    <input
+                                        type="text"
+                                        value={formData.duration}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                                        required
+                                        placeholder="4 שעות"
+                                        className={styles.textInput}
+                                    />
+                                </div>
+                            </div>
+                            <div className={styles.formRow}>
+                                <div className={styles.formField}>
+                                    <label>מחיר (₪)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.price}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                                        required
+                                        min="0"
+                                        className={styles.numberInput}
+                                    />
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>קיבולת</label>
+                                    <input
+                                        type="number"
+                                        value={formData.capacity}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))}
+                                        required
+                                        min="1"
+                                        className={styles.numberInput}
+                                    />
+                                </div>
+                            </div>
+                            <div className={styles.formField}>
+                                <label className={styles.checkboxLabel}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.active}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                                    />
+                                    קורס פעיל
+                                </label>
+                            </div>
+                            <div className={styles.modalActions}>
+                                <button type="button" className={styles.cancelBtn} onClick={() => setIsModalOpen(false)}>
+                                    ביטול
+                                </button>
+                                <button type="submit" className="btn btn-primary">
+                                    {editingCourse ? "שמירה" : "הוספה"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

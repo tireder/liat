@@ -1,0 +1,199 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+.header {
+    text-align: center;
+}
+
+.title {
+    font-size: 1.375rem;
+    font-weight: 500;
+    color: var(--foreground);
+    margin-bottom: 0.25rem;
+}
+
+.subtitle {
+    font-size: 0.9375rem;
+    color: var(--foreground-muted);
+}
+
+/* Calendar */
+.calendar {
+    background: var(--background-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 1rem;
+}
+
+.calendarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.monthBtn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--foreground);
+    transition: all 0.2s ease;
+}
+
+.monthBtn:hover:not(:disabled) {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.monthBtn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.monthLabel {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.weekDays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.weekDay {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--foreground-muted);
+    padding: 0.25rem 0;
+}
+
+.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+}
+
+.day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--foreground);
+    transition: all 0.15s ease;
+}
+
+.day:hover:not(:disabled):not(.selected) {
+    background: var(--color-accent);
+}
+
+.day.selected {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+}
+
+.day.today:not(.selected) {
+    border: 1.5px solid var(--color-primary);
+}
+
+.day.disabled {
+    color: var(--border-color);
+    cursor: default;
+}
+
+/* Time Section */
+.timeSection {
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.timeTitle {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--foreground);
+    margin-bottom: 0.75rem;
+}
+
+.noSlots {
+    text-align: center;
+    color: var(--foreground-muted);
+    padding: 1.5rem;
+    background: var(--background-alt);
+    border-radius: var(--radius-lg);
+    font-size: 0.9375rem;
+}
+
+.timeGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.timeSlot {
+    padding: 0.75rem 0.5rem;
+    background: var(--background-card);
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--foreground);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.timeSlot:hover {
+    border-color: var(--color-primary);
+}
+
+.timeSlot.selected {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+    font-weight: 500;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+.footer button {
+    flex: 1;
+}
+
+.footer button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

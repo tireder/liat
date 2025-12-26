@@ -1,0 +1,169 @@
+.section {
+    padding: 5rem 1.25rem;
+    background: var(--background);
+}
+
+.container {
+    max-width: 1140px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-accent);
+    color: var(--color-accent-dark);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-radius: 9999px;
+    margin-bottom: 1rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--foreground);
+    margin-bottom: 0.75rem;
+}
+
+.subtitle {
+    font-size: 1.0625rem;
+    color: var(--foreground-muted);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.divider {
+    width: 48px;
+    height: 2px;
+    background: var(--color-primary);
+    border-radius: 9999px;
+    margin: 1.5rem auto 0;
+}
+
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+/* Card */
+.card {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--background-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    transition: all 0.25s ease;
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.cardIcon {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent);
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+
+.cardContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.cardTitle {
+    font-size: 1.0625rem;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.cardDescription {
+    font-size: 0.875rem;
+    color: var(--foreground-muted);
+    line-height: 1.5;
+}
+
+.cardMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.625rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.duration {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--foreground-muted);
+}
+
+.price {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+}
+
+/* CTA */
+.cta {
+    text-align: center;
+    margin-top: 3rem;
+}
+
+/* Responsive */
+@media (min-width: 640px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .section {
+        padding: 7rem 2rem;
+    }
+
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .title {
+        font-size: 2.5rem;
+    }
+}

@@ -1,0 +1,233 @@
+.section {
+    padding: 5rem 1.25rem;
+    background: var(--background);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-accent);
+    color: var(--color-accent-dark);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-radius: 9999px;
+    margin-bottom: 1rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--foreground);
+    margin-bottom: 0.75rem;
+}
+
+.subtitle {
+    font-size: 1.0625rem;
+    color: var(--foreground-muted);
+}
+
+.divider {
+    width: 48px;
+    height: 2px;
+    background: var(--color-primary);
+    border-radius: 9999px;
+    margin: 1.5rem auto 0;
+}
+
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem;
+}
+
+/* Image Card */
+.imageCard {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    background: none;
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.imagePlaceholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: var(--color-accent);
+    transition: transform 0.3s ease;
+}
+
+.placeholderText {
+    font-size: 0.75rem;
+    color: var(--foreground-muted);
+    text-align: center;
+    padding: 0 0.5rem;
+    font-weight: 500;
+}
+
+.imageCard:hover .imagePlaceholder {
+    transform: scale(1.03);
+}
+
+.imageOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(45, 41, 38, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.imageCard:hover .imageOverlay {
+    opacity: 1;
+}
+
+/* View All */
+.viewAll {
+    text-align: center;
+    margin-top: 2.5rem;
+}
+
+.viewAllLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--foreground);
+    font-weight: 500;
+    text-decoration: none;
+    font-size: 0.9375rem;
+    padding: 0.5rem;
+    transition: color 0.2s ease, gap 0.2s ease;
+}
+
+.viewAllLink:hover {
+    color: var(--color-primary-dark);
+    gap: 0.75rem;
+}
+
+/* Lightbox */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.92);
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.closeBtn {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.lightboxContent {
+    max-width: 90vw;
+    max-height: 80vh;
+}
+
+.lightboxImage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    width: 300px;
+    height: 300px;
+    background: var(--color-accent);
+    border-radius: var(--radius-xl);
+    color: var(--foreground);
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (min-width: 640px) {
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .lightboxImage {
+        width: 450px;
+        height: 450px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .section {
+        padding: 7rem 2rem;
+    }
+
+    .title {
+        font-size: 2.5rem;
+    }
+
+    .grid {
+        gap: 1.25rem;
+    }
+}
