@@ -457,8 +457,7 @@ export default function MyBookingsPage() {
                                                 {booking.status === "cancelled" && "בוטל"}
                                                 {booking.status === "completed" && "הושלם"}
                                                 {booking.status === "no_show" && "לא הגיעה"}
-                                                {booking.status === "confirmed" && new Date(`${booking.date}T${booking.start_time}`) <= new Date() && "הושלם"}
-                                                {booking.status === "confirmed" && new Date(`${booking.date}T${booking.start_time}`) > new Date() && "מאושר"}
+                                                {booking.status === "confirmed" && "מאושר"}
                                                 {booking.status === "pending" && "ממתין לאישור"}
                                                 {booking.status === "pending_change" && "ממתין לשינוי"}
                                             </span>
