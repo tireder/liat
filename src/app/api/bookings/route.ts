@@ -41,10 +41,11 @@ async function sendBookingNotifications(
         const { data: settings } = await supabase
             .from("settings")
             .select("key, value")
-            .in("key", ["phone", "business_name"]);
+            .in("key", ["phone", "business_name", "sms_sender"]);
 
         const artistPhone = settings?.find(s => s.key === "phone")?.value;
         const businessName = settings?.find(s => s.key === "business_name")?.value || "ליאת";
+        const smsSender = settings?.find(s => s.key === "sms_sender")?.value || businessName;
 
         const dateFormatted = formatDateHebrew(booking.date);
         const clientPhone = formatPhone(booking.client.phone);
@@ -63,7 +64,7 @@ ${clientName} - ${clientPhone}`;
             }
 
             await sendSms({
-                sender: businessName,
+                sender: smsSender,
                 recipients: formatPhone(artistPhone),
                 msg: artistMsg,
             });
@@ -80,7 +81,7 @@ ${dateFormatted} בשעה ${booking.start_time}
 ${businessName}`;
 
         await sendSms({
-            sender: businessName,
+            sender: smsSender,
             recipients: clientPhone,
             msg: customerMsg,
         });

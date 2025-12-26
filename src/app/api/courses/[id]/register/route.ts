@@ -37,10 +37,11 @@ async function sendCourseNotifications(
         const { data: settings } = await supabase
             .from("settings")
             .select("key, value")
-            .in("key", ["phone", "business_name"]);
+            .in("key", ["phone", "business_name", "sms_sender"]);
 
         const artistPhone = settings?.find(s => s.key === "phone")?.value;
         const businessName = settings?.find(s => s.key === "business_name")?.value || "ליאת";
+        const smsSender = settings?.find(s => s.key === "sms_sender")?.value || businessName;
 
         const dateFormatted = formatDateHebrew(course.start_date);
         const formattedClientPhone = formatPhone(clientPhone);
@@ -53,7 +54,7 @@ ${dateFormatted}
 ${clientName} - ${formattedClientPhone}`;
 
             await sendSms({
-                sender: businessName,
+                sender: smsSender,
                 recipients: formatPhone(artistPhone),
                 msg: artistMsg,
             });
@@ -68,7 +69,7 @@ ${course.location ? `📍 ${course.location}` : ""}
 ${businessName}`;
 
         await sendSms({
-            sender: businessName,
+            sender: smsSender,
             recipients: formattedClientPhone,
             msg: customerMsg,
         });

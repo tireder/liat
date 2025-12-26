@@ -36,10 +36,11 @@ async function sendAdminChangeNotification(
         const { data: settings } = await supabase
             .from("settings")
             .select("key, value")
-            .in("key", ["phone", "business_name"]);
+            .in("key", ["phone", "business_name", "sms_sender"]);
 
         const artistPhone = settings?.find(s => s.key === "phone")?.value;
         const businessName = settings?.find(s => s.key === "business_name")?.value || "ליאת";
+        const smsSender = settings?.find(s => s.key === "sms_sender")?.value || businessName;
 
         const clientPhone = formatPhone(booking.client.phone);
         const clientName = booking.client.name || clientPhone;
@@ -68,7 +69,7 @@ ${businessName}`;
         // Send to customer if message exists
         if (customerMsg) {
             await sendSms({
-                sender: businessName,
+                sender: smsSender,
                 recipients: clientPhone,
                 msg: customerMsg,
             });
