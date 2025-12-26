@@ -6,34 +6,32 @@
 - Environments: .env
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 1357.5ms
+Γ£ô Compiled successfully in 1319.6ms
   Running TypeScript ...
   Collecting page data using 27 workers ...
   Generating static pages using 27 workers (0/35) ...
   Generating static pages using 27 workers (8/35) 
   Generating static pages using 27 workers (17/35) 
   Generating static pages using 27 workers (26/35) 
-node.exe : Error fetching settings: Error: Missing 
-Supabase admin credentials
-At C:\Users\Michael\AppData\Roaming\npm\npm.ps1:24 
-char:5
-+     & "node$exe"  
-"$basedir/node_modules/npm/bin/npm-cli.js" $args
-+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (Error fet 
-   ching ...min credentials:String) [], RemoteExcepti  
-  on
+node.exe : Error fetching settings: Error: Missing Supabase 
+admin credentials
+At C:\Users\Michael\AppData\Roaming\npm\npm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/npm/bin/npm-cli.js" 
+$args
++     
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error fet    
+ching ...min credentials:String) [], RemoteExcepti    on
     + FullyQualifiedErrorId : NativeCommandError
  
-    at <unknown> (D:\Projects\Liart\.next\server\chunks
-\ssr\_d2890a94._.js:58:46762)
-    at cu (D:\Projects\Liart\.next\server\chunks\ssr\_d
-2890a94._.js:58:46872)
-    at cv (D:\Projects\Liart\.next\server\chunks\ssr\_d
-2890a94._.js:58:47311)
+    at <unknown> (D:\Projects\Liart\.next\server\chunks\ssr\_d2
+890a94._.js:58:46762)
+    at cu (D:\Projects\Liart\.next\server\chunks\ssr\_d2890a94.
+_.js:58:46872)
+    at cv (D:\Projects\Liart\.next\server\chunks\ssr\_d2890a94.
+_.js:58:47311)
     at stringify (<anonymous>)
-Γ£ô Generating static pages using 27 workers (35/35) in 188.6ms
+Γ£ô Generating static pages using 27 workers (35/35) in 192.7ms
   Finalizing page optimization ...
 
 Route (app)

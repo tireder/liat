@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { NailPolishIcon, CalendarIcon, BookIcon, StarIcon, HeartIcon, AwardIcon, ChevronDownIcon } from "@/components/icons";
 import styles from "./Hero.module.css";
@@ -23,6 +24,23 @@ export default function Hero({ settings }: HeroProps) {
     const years = settings?.aboutYears || "8";
     const clients = settings?.aboutClients || "500";
 
+    // Check for logged-in user
+    const [userName, setUserName] = useState<string | null>(null);
+
+    useEffect(() => {
+        try {
+            const session = localStorage.getItem("liart_session");
+            if (session) {
+                const parsed = JSON.parse(session);
+                if (parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
+                    setUserName(parsed.name || null);
+                }
+            }
+        } catch {
+            // Invalid session
+        }
+    }, []);
+
     return (
         <section className={styles.hero}>
             {/* Background */}
@@ -33,6 +51,13 @@ export default function Hero({ settings }: HeroProps) {
 
             {/* Content */}
             <div className={styles.content}>
+                {/* Personalized Greeting */}
+                {userName && (
+                    <div className={styles.greeting}>
+                        <span>היי {userName}! 👋</span>
+                    </div>
+                )}
+
                 {/* Brand */}
                 <div className={styles.brand}>
                     <div className={styles.logoIcon}>
@@ -94,3 +119,4 @@ export default function Hero({ settings }: HeroProps) {
         </section>
     );
 }
+

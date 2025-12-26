@@ -47,6 +47,32 @@
     max-width: 520px;
 }
 
+/* Personalized Greeting */
+.greeting {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1.25rem;
+    background: linear-gradient(135deg, rgba(201, 168, 160, 0.2), rgba(232, 213, 209, 0.15));
+    border: 1px solid rgba(201, 168, 160, 0.3);
+    border-radius: 9999px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #e8d5d1;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Brand */
 .brand {
     display: flex;
