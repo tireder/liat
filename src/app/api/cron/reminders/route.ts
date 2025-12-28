@@ -52,7 +52,8 @@ export async function GET(request: NextRequest) {
             .in("key", ["business_name", "phone", "sms_sender"]);
 
         const businessName = settings?.find((s: { key: string; value: string }) => s.key === "business_name")?.value || "ליאת";
-        const smsSender = settings?.find((s: { key: string; value: string }) => s.key === "sms_sender")?.value || businessName;
+        const smsSettingValue = settings?.find((s: { key: string; value: string }) => s.key === "sms_sender")?.value;
+        const smsSender = smsSettingValue && smsSettingValue.trim() ? smsSettingValue.trim() : businessName;
 
         // Get bookings for tomorrow that are confirmed and haven't received reminders
         const { data: bookings, error } = await supabase

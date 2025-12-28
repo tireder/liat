@@ -6,7 +6,7 @@
 - Environments: .env
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 1405.4ms
+Γ£ô Compiled successfully in 1416.0ms
   Running TypeScript ...
   Collecting page data using 27 workers ...
   Generating static pages using 27 workers (0/35) ...
@@ -33,7 +33,7 @@ char:5
     at cv (D:\Projects\Liart\.next\server\chunks\ssr\_d
 2890a94._.js:58:47311)
     at stringify (<anonymous>)
-Γ£ô Generating static pages using 27 workers (35/35) in 201.6ms
+Γ£ô Generating static pages using 27 workers (35/35) in 208.7ms
   Finalizing page optimization ...
 
 Route (app)

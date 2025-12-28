@@ -40,7 +40,8 @@ async function sendAdminChangeNotification(
 
         const artistPhone = settings?.find(s => s.key === "phone")?.value;
         const businessName = settings?.find(s => s.key === "business_name")?.value || "ליאת";
-        const smsSender = settings?.find(s => s.key === "sms_sender")?.value || businessName;
+        const smsSettingValue = settings?.find(s => s.key === "sms_sender")?.value;
+        const smsSender = smsSettingValue && smsSettingValue.trim() ? smsSettingValue.trim() : businessName;
 
         const clientPhone = formatPhone(booking.client.phone);
         const clientName = booking.client.name || clientPhone;
