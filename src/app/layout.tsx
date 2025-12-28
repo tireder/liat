@@ -25,13 +25,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "ליארט",
+    title: "ליאת",
   },
   formatDetection: {
     telephone: true,
   },
   openGraph: {
-    title: "ליארט | סלון ציפורניים",
+    title: "ליאת | סלון ציפורניים",
     description: "סלון ציפורניים מקצועי - קביעת תורים וקורסים",
     locale: "he_IL",
     type: "website",
