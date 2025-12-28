@@ -18,8 +18,9 @@ export default function PhoneStep({
     onNext,
 }: PhoneStepProps) {
     const [phone, setPhone] = useState(bookingData.phone || "");
+    const [name, setName] = useState(bookingData.name || "");
     const [otp, setOtp] = useState("");
-    const [step, setStep] = useState<"phone" | "otp" | "verified">("phone");
+    const [step, setStep] = useState<"phone" | "otp" | "name" | "verified">("phone");
     const [loading, setLoading] = useState(true); // Start loading to check session
     const [error, setError] = useState("");
     const [otpMethod, setOtpMethod] = useState<"supabase" | "sms4free">("sms4free");
@@ -159,16 +160,8 @@ export default function PhoneStep({
                     setError("קוד שגוי. נסי שוב.");
                     console.error("Verify Error:", verifyError);
                 } else {
-                    // Save session to localStorage (7 days)
-                    const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString();
-                    const session = { phone, name: phone, expiresAt };
-                    localStorage.setItem("liart_session", JSON.stringify(session));
-
-                    updateBookingData({ phone, name: phone });
-                    setStep("verified");
-                    setTimeout(() => {
-                        onNext();
-                    }, 1000);
+                    // Go to name step
+                    setStep("name");
                 }
             } else {
                 // Use SMS4Free custom API
@@ -183,16 +176,8 @@ export default function PhoneStep({
                 if (!res.ok) {
                     setError(data.error || "קוד שגוי. נסי שוב.");
                 } else {
-                    // Save session to localStorage (7 days)
-                    const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString();
-                    const session = { phone, name: phone, expiresAt };
-                    localStorage.setItem("liart_session", JSON.stringify(session));
-
-                    updateBookingData({ phone, name: phone });
-                    setStep("verified");
-                    setTimeout(() => {
-                        onNext();
-                    }, 1000);
+                    // Go to name step
+                    setStep("name");
                 }
             }
         } catch {
@@ -287,6 +272,43 @@ export default function PhoneStep({
                         }}
                     >
                         שלחי קוד חדש
+                    </button>
+                </div>
+            )}
+
+            {step === "name" && (
+                <div className={styles.form}>
+                    <div className={styles.field}>
+                        <label>מה השם שלך?</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="שם מלא"
+                            className={styles.input}
+                            autoFocus
+                        />
+                    </div>
+
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => {
+                            const trimmedName = name.trim() || phone;
+                            // Save session to localStorage (7 days)
+                            const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString();
+                            const session = { phone, name: trimmedName, expiresAt };
+                            localStorage.setItem("liart_session", JSON.stringify(session));
+
+                            updateBookingData({ phone, name: trimmedName });
+                            setStep("verified");
+                            setTimeout(() => {
+                                onNext();
+                            }, 1000);
+                        }}
+                        disabled={!name.trim()}
+                        style={{ width: "100%" }}
+                    >
+                        המשך
                     </button>
                 </div>
             )}
