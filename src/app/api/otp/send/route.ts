@@ -58,11 +58,12 @@ export async function POST(request: NextRequest) {
         // Get sender name from settings
         const { data: settings } = await supabase
             .from("settings")
-            .select("value")
-            .eq("key", "business_name")
-            .single();
+            .select("key, value")
+            .in("key", ["business_name", "sms_sender"]);
 
-        const sender = settings?.value || "Liart";
+        const businessName = settings?.find(s => s.key === "business_name")?.value || "ליאת";
+        const smsSettingValue = settings?.find(s => s.key === "sms_sender")?.value;
+        const sender = smsSettingValue && smsSettingValue.trim() ? smsSettingValue.trim() : businessName;
 
         // Send SMS
         await sendSms({
