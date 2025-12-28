@@ -78,15 +78,18 @@ ${clientName} - ${clientPhone}`;
 ${booking.service.name}
 ${dateFormatted} בשעה ${booking.start_time}
 
-לביטול או שינוי: ${process.env.NEXT_PUBLIC_SITE_URL || "https://liat-nine.vercel.app"}/my-bookings
+לביטול או שינוי: ${process.env.NEXT_PUBLIC_SITE_URL || "https://www.liat-nails.art"}/my-bookings
 
 ${businessName}`;
 
+        // Log SMS send duration
+        console.time('sendBookingNotifications SMS');
         await sendSms({
             sender: smsSender,
             recipients: clientPhone,
             msg: customerMsg,
         });
+        console.timeEnd('sendBookingNotifications SMS');
     } catch (error) {
         console.error("Error sending booking notifications:", error);
         // Don't throw - we don't want to fail the booking if SMS fails

@@ -55,7 +55,7 @@ async function sendAdminChangeNotification(
 ${booking.service.name}
 ${dateFormatted} בשעה ${booking.start_time}
 
-לקביעת תור חדש: ${process.env.NEXT_PUBLIC_SITE_URL || "https://liat-nine.vercel.app"}/book
+לקביעת תור חדש: ${process.env.NEXT_PUBLIC_SITE_URL || "https://www.liat-nails.art"}/book
 
 ${businessName}`;
         } else if (booking.status === "confirmed" && previousStatus === "pending") {
@@ -175,7 +175,10 @@ export async function PATCH(request: NextRequest) {
 
         // Send SMS notification
         if (data && previousStatus && previousStatus !== status) {
-            sendAdminChangeNotification(supabase, data, previousStatus);
+            // Log admin notification duration
+            console.time('sendAdminChangeNotification');
+            await sendAdminChangeNotification(supabase, data, previousStatus);
+            console.timeEnd('sendAdminChangeNotification');
         }
 
         return NextResponse.json(data);

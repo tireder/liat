@@ -69,7 +69,7 @@ async function sendBookingChangeNotification(
 ${booking.service.name}
 ${dateFormatted} בשעה ${booking.start_time}
 
-לקביעת תור חדש: ${process.env.NEXT_PUBLIC_SITE_URL || "https://liat-nine.vercel.app"}/book
+לקביעת תור חדש: ${process.env.NEXT_PUBLIC_SITE_URL || "https://www.liat-nails.art"}/book
 
 ${businessName}`;
 
@@ -228,7 +228,10 @@ export async function PATCH(request: NextRequest, context: Params) {
                 });
 
                 // Send notifications
-                sendBookingChangeNotification(supabase, booking, "changed", rescheduleDate, rescheduleTime);
+                // Log booking change notification duration
+                console.time('sendBookingChangeNotification');
+                await sendBookingChangeNotification(supabase, booking, "changed", rescheduleDate, rescheduleTime);
+                console.timeEnd('sendBookingChangeNotification');
 
                 return NextResponse.json(updated);
             }
@@ -263,7 +266,10 @@ export async function PATCH(request: NextRequest, context: Params) {
 
             // Send notifications for status changes
             if (status === "cancelled") {
-                sendBookingChangeNotification(supabase, booking, "cancelled");
+                // Log booking change notification duration
+                console.time('sendBookingChangeNotification');
+                await sendBookingChangeNotification(supabase, booking, "cancelled");
+                console.timeEnd('sendBookingChangeNotification');
             } else if (status === "confirmed" && currentStatus === "pending") {
                 sendBookingChangeNotification(supabase, booking, "confirmed");
             }

@@ -45,17 +45,33 @@ export default function PhoneStep({
                     const isValid = session.expiresAt
                         ? new Date(session.expiresAt) > new Date()
                         : session.expires > Date.now();
+
                     if (isValid) {
                         if (!mounted) return;
+                        const savedName = session.name || session.phone;
                         setPhone(session.phone);
-                        updateBookingData({ phone: session.phone, name: session.name || session.phone });
-                        setStep("verified");
-                        setLoading(false);
-                        // Give parent component time to update before moving to next step
-                        setTimeout(() => {
-                            if (mounted) onNext();
-                        }, 800);
-                        return;
+
+                        // Check if name looks like a phone number (contains digit and length >= 9)
+                        // If so, treat as "incomplete profile" and ask for name
+                        const isNameNumeric = /\d{3}/.test(savedName) && savedName.replace(/\D/g, "").length >= 9;
+
+                        if (isNameNumeric) {
+                            // Pre-fill but force name step
+                            setName("");
+                            setStep("name");
+                            // Don't auto-proceed
+                        } else {
+                            // Good profile
+                            setName(savedName);
+                            updateBookingData({ phone: session.phone, name: savedName });
+                            setStep("verified");
+                            setLoading(false);
+                            // Give parent component time to update before moving to next step
+                            setTimeout(() => {
+                                if (mounted) onNext();
+                            }, 800);
+                            return;
+                        }
                     } else {
                         localStorage.removeItem("liart_session");
                     }

@@ -49,7 +49,7 @@ export default function RootLayout({
         {children}
         <AccessibilityWidget />
         <PwaPrompt />
-        <MyBookingsWidget />
+
       </body>
     </html>
   );

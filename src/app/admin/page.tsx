@@ -849,6 +849,7 @@ function SettingsView() {
         otp_method: "sms4free" as "supabase" | "sms4free",
         business_name: "ליאת",
         sms_sender: "",
+        calendar_token: "",
         // Hero section
         hero_title: "יופי בקצות האצבעות",
         hero_subtitle: "טיפולי ציפורניים מקצועיים בסביבה אינטימית ומפנקת. כל ביקור הוא חוויה.",
@@ -859,6 +860,7 @@ function SettingsView() {
         about_clients: "500",
         about_graduates: "50",
     });
+    const [calendarLink, setCalendarLink] = useState("");
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
     const [editingHours, setEditingHours] = useState<number | null>(null);
@@ -885,6 +887,7 @@ function SettingsView() {
                             otp_method: data.settings.otp_method || "sms4free",
                             business_name: data.settings.business_name || "ליאת",
                             sms_sender: data.settings.sms_sender || "",
+                            calendar_token: data.settings.calendar_token || "",
                             // Hero section
                             hero_title: data.settings.hero_title || prev.hero_title,
                             hero_subtitle: data.settings.hero_subtitle || prev.hero_subtitle,
@@ -904,6 +907,9 @@ function SettingsView() {
                             close_time: h.close_time || "20:00",
                             active: h.active,
                         })));
+                    }
+                    if (data.settings && data.settings.calendar_token) {
+                        setCalendarLink(`${window.location.origin}/api/calendar/feed?token=${data.settings.calendar_token}`);
                     }
                 }
 
@@ -941,6 +947,14 @@ function SettingsView() {
 
     const removeHoliday = (id: string) => {
         setHolidays(prev => prev.filter(h => h.id !== id));
+    };
+
+    const generateCalendarToken = async (e: React.MouseEvent) => {
+        e.preventDefault(); // Prevent form submission
+        const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        setSettings(prev => ({ ...prev, calendar_token: token }));
+        setCalendarLink(`${window.location.origin}/api/calendar/feed?token=${token}`);
+        showToast("נוצר טוקן חדש - יש לשמור את ההגדרות", "success");
     };
 
     const saveSettings = async () => {
@@ -1210,6 +1224,46 @@ function SettingsView() {
                                     onChange={(e) => setSettings(prev => ({ ...prev, about_graduates: e.target.value }))}
                                     className={styles.numberInput}
                                 />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Calendar Sync */}
+                    <div className={styles.settingsSection}>
+                        <h3 className={styles.settingsSectionTitle}>סנכרון יומן (Google / Apple Calendar)</h3>
+                        <div className={styles.calendarSync} style={{ padding: "1rem", background: "var(--background-secondary)", borderRadius: "var(--radius-md)" }}>
+                            <p className={styles.infoText} style={{ marginBottom: "1rem", color: "var(--foreground-muted)" }}>
+                                העתיקי את הקישור למטה והוסיפי אותו כ"יומן רשום" (Subscribed Calendar) ב-iPhone או ב-Google Calendar כדי לראות את כל התורים ביומן האישי שלך.
+                            </p>
+
+                            {calendarLink ? (
+                                <div className={styles.linkBox} style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+                                    <input
+                                        readOnly
+                                        value={calendarLink}
+                                        dir="ltr"
+                                        onClick={e => e.currentTarget.select()}
+                                        className={styles.textInput}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <button type="button" className="btn btn-secondary" onClick={() => {
+                                        navigator.clipboard.writeText(calendarLink);
+                                        showToast("הקישור הועתק!", "success");
+                                    }}>
+                                        העתק
+                                    </button>
+                                </div>
+                            ) : (
+                                <button type="button" className="btn btn-secondary" onClick={generateCalendarToken}>
+                                    צור קישור לסנכרון יומן
+                                </button>
+                            )}
+
+                            <div className={styles.warningBox}>
+                                <small style={{ display: "block", color: "var(--color-warning)", marginBottom: "0.5rem" }}>⚠️ הקישור הזה הוא אישי וסודי. אל תשתפי אותו עם אחרים.</small>
+                                <button type="button" className={styles.textLink} style={{ background: "none", border: "none", color: "var(--color-primary)", cursor: "pointer", fontSize: "0.875rem" }} onClick={generateCalendarToken}>
+                                    {calendarLink ? "צור קישור חדש (יבטל את הקודם)" : ""}
+                                </button>
                             </div>
                         </div>
                     </div>
