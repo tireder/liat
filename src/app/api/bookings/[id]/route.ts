@@ -168,19 +168,26 @@ export async function PATCH(request: NextRequest, context: Params) {
             return NextResponse.json({ error: "Booking not found" }, { status: 404 });
         }
 
-        // Handle reschedule request
-        if (requestedDate && requestedTime) {
+        // Handle reschedule request - support both formats
+        // Admin format: changeType, newDate, newTime
+        // Client format: requestedDate, requestedTime
+        const rescheduleDate = body.newDate || body.requestedDate;
+        const rescheduleTime = body.newTime || body.requestedTime;
+        const isAdminReschedule = body.changeType === "changed";
+
+        if (rescheduleDate && rescheduleTime) {
             const bookingDateTime = new Date(`${booking.date}T${booking.start_time}`);
             const hoursUntilBooking = (bookingDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
 
-            if (hoursUntilBooking < 24) {
+            // Admin reschedule bypasses 24h restriction
+            if (hoursUntilBooking < 24 && !isAdminReschedule) {
                 // Needs admin approval
                 const { data: updated, error } = await supabase
                     .from("bookings")
                     .update({
                         status: "pending_change",
-                        requested_date: requestedDate,
-                        requested_time: requestedTime,
+                        requested_date: rescheduleDate,
+                        requested_time: rescheduleTime,
                     })
                     .eq("id", id)
                     .select()
@@ -192,17 +199,17 @@ export async function PATCH(request: NextRequest, context: Params) {
                     booking_id: id,
                     action: "reschedule_requested",
                     actor,
-                    details: { requestedDate, requestedTime },
+                    details: { requestedDate: rescheduleDate, requestedTime: rescheduleTime },
                 });
 
                 return NextResponse.json({ ...updated, pending: true });
             } else {
-                // Auto-approve
+                // Auto-approve (or admin reschedule)
                 const { data: updated, error } = await supabase
                     .from("bookings")
                     .update({
-                        date: requestedDate,
-                        start_time: requestedTime,
+                        date: rescheduleDate,
+                        start_time: rescheduleTime,
                         requested_date: null,
                         requested_time: null,
                     })
@@ -215,12 +222,12 @@ export async function PATCH(request: NextRequest, context: Params) {
                 await supabase.from("booking_logs").insert({
                     booking_id: id,
                     action: "rescheduled",
-                    actor,
-                    details: { newDate: requestedDate, newTime: requestedTime },
+                    actor: isAdminReschedule ? "admin" : actor,
+                    details: { newDate: rescheduleDate, newTime: rescheduleTime },
                 });
 
                 // Send notifications
-                sendBookingChangeNotification(supabase, booking, "changed", requestedDate, requestedTime);
+                sendBookingChangeNotification(supabase, booking, "changed", rescheduleDate, rescheduleTime);
 
                 return NextResponse.json(updated);
             }
