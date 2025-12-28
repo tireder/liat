@@ -432,18 +432,27 @@ export default function MyBookingsPage() {
                                                 </span>
                                             </div>
                                             <div className={styles.bookingActions}>
-                                                {canCancel(booking) ? (
-                                                    <button
-                                                        className={styles.cancelBtn}
-                                                        onClick={() => cancelBooking(booking.id)}
-                                                        disabled={loading}
-                                                    >
-                                                        <XIcon size={16} />
-                                                        ביטול
-                                                    </button>
-                                                ) : (
+                                                {canCancel(booking) && (
+                                                    <>
+                                                        <Link
+                                                            href={`/book?reschedule=${booking.id}`}
+                                                            className={styles.rescheduleBtn}
+                                                        >
+                                                            שינוי תאריך
+                                                        </Link>
+                                                        <button
+                                                            className={styles.cancelBtn}
+                                                            onClick={() => cancelBooking(booking.id)}
+                                                            disabled={loading}
+                                                        >
+                                                            <XIcon size={16} />
+                                                            ביטול
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {!canCancel(booking) && (
                                                     <span className={styles.cantCancel}>
-                                                        לא ניתן לבטל (פחות מ-{cancelHoursBefore} שעות)
+                                                        לא ניתן לשנות (פחות מ-{cancelHoursBefore} שעות)
                                                     </span>
                                                 )}
                                             </div>
