@@ -46,7 +46,8 @@ async function sendBookingNotifications(
         const artistPhone = settings?.find(s => s.key === "phone")?.value;
         const businessName = settings?.find(s => s.key === "business_name")?.value || "ליאת";
         const smsSettingValue = settings?.find(s => s.key === "sms_sender")?.value;
-        const smsSender = smsSettingValue && smsSettingValue.trim() ? smsSettingValue.trim() : businessName;
+        // SMS4Free requires English sender - use 'Liat' as safe fallback
+        const smsSender = smsSettingValue && smsSettingValue.trim() ? smsSettingValue.trim() : "Liat";
 
         const dateFormatted = formatDateHebrew(booking.date);
         const clientPhone = formatPhone(booking.client.phone);

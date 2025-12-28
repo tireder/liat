@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { BookingData } from "@/app/book/page";
 import { ChevronDownIcon } from "@/components/icons";
 import styles from "./DateTimeStep.module.css";
@@ -18,10 +18,24 @@ const HEBREW_MONTHS = [
     "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"
 ];
 
+// Format date as YYYY-MM-DD in local timezone
+function formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
 // Generate time slots based on operating hours
-const generateTimeSlots = (date: string, duration: number): string[] => {
+const generateTimeSlots = (
+    date: string,
+    duration: number,
+    bookedSlots: string[],
+    bufferMinutes: number
+): string[] => {
     const slots: string[] = [];
-    const dayOfWeek = new Date(date).getDay();
+    const selectedDate = new Date(date + "T00:00:00");
+    const dayOfWeek = selectedDate.getDay();
 
     // Operating hours (simplified)
     let startHour = 9;
@@ -29,19 +43,40 @@ const generateTimeSlots = (date: string, duration: number): string[] => {
 
     if (dayOfWeek === 6) return []; // Saturday closed
 
+    const now = new Date();
+    const isToday = formatLocalDate(now) === date;
+
     for (let hour = startHour; hour < endHour; hour++) {
         for (let min = 0; min < 60; min += 30) {
+            const slotTime = `${hour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
+
+            // Skip if this is today and the slot is in the past or within buffer
+            if (isToday) {
+                const slotDateTime = new Date(selectedDate);
+                slotDateTime.setHours(hour, min, 0, 0);
+                const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
+                if (slotDateTime <= bufferTime) {
+                    continue;
+                }
+            }
+
+            // Check if slot fits before closing
             const endMin = min + duration;
             const endHourCalc = hour + Math.floor(endMin / 60);
-            if (endHourCalc < endHour || (endHourCalc === endHour && endMin % 60 === 0)) {
-                slots.push(`${hour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`);
+            if (endHourCalc > endHour || (endHourCalc === endHour && endMin % 60 > 0)) {
+                continue;
             }
+
+            // Check if slot is already booked
+            if (bookedSlots.includes(slotTime)) {
+                continue;
+            }
+
+            slots.push(slotTime);
         }
     }
 
-    // Simulate some taken slots
-    const takenSlots = ["10:00", "11:30", "14:00", "16:30"];
-    return slots.filter(s => !takenSlots.includes(s));
+    return slots;
 };
 
 export default function DateTimeStep({
@@ -54,6 +89,53 @@ export default function DateTimeStep({
         const now = new Date();
         return new Date(now.getFullYear(), now.getMonth(), 1);
     });
+    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
+    const [bufferMinutes, setBufferMinutes] = useState(15);
+
+    // Fetch buffer minutes setting on mount
+    useEffect(() => {
+        async function fetchSettings() {
+            try {
+                const res = await fetch("/api/settings");
+                if (res.ok) {
+                    const data = await res.json();
+                    const buffer = data.find((s: { key: string }) => s.key === "buffer_minutes");
+                    if (buffer) {
+                        setBufferMinutes(parseInt(buffer.value) || 15);
+                    }
+                }
+            } catch {
+                // Use default
+            }
+        }
+        fetchSettings();
+    }, []);
+
+    // Fetch booked slots when date changes
+    useEffect(() => {
+        async function fetchBookedSlots() {
+            if (!bookingData.date) return;
+
+            setLoadingSlots(true);
+            try {
+                const res = await fetch(`/api/bookings?date=${bookingData.date}`);
+                if (res.ok) {
+                    const bookings = await res.json();
+                    // Get booked start times (confirmed or pending)
+                    const taken = bookings
+                        .filter((b: { status: string }) => b.status === "confirmed" || b.status === "pending")
+                        .map((b: { start_time: string }) => b.start_time.slice(0, 5));
+                    setBookedSlots(taken);
+                }
+            } catch (error) {
+                console.error("Error fetching booked slots:", error);
+                setBookedSlots([]);
+            }
+            setLoadingSlots(false);
+        }
+        fetchBookedSlots();
+    }, [bookingData.date]);
 
     // Generate calendar days
     const calendarDays = useMemo(() => {
@@ -91,12 +173,13 @@ export default function DateTimeStep({
 
     const timeSlots = useMemo(() => {
         if (!bookingData.date) return [];
-        return generateTimeSlots(bookingData.date, bookingData.serviceDuration);
-    }, [bookingData.date, bookingData.serviceDuration]);
+        return generateTimeSlots(bookingData.date, bookingData.serviceDuration, bookedSlots, bufferMinutes);
+    }, [bookingData.date, bookingData.serviceDuration, bookedSlots, bufferMinutes]);
 
     const handleDateSelect = (date: Date) => {
+        // Use local date formatting to avoid timezone issues
         updateBookingData({
-            date: date.toISOString().split("T")[0],
+            date: formatLocalDate(date),
             time: null, // Reset time when date changes
         });
     };
@@ -118,8 +201,8 @@ export default function DateTimeStep({
 
     const formatSelectedDate = () => {
         if (!bookingData.date) return "";
-        const d = new Date(bookingData.date);
-        return `${d.getDate()} ${HEBREW_MONTHS[d.getMonth()]}`;
+        const [year, month, day] = bookingData.date.split("-").map(Number);
+        return `${day} ${HEBREW_MONTHS[month - 1]}`;
     };
 
     return (
@@ -162,9 +245,9 @@ export default function DateTimeStep({
                     {calendarDays.map((day, i) => (
                         <button
                             key={i}
-                            className={`${styles.day} ${day.date && bookingData.date === day.date.toISOString().split("T")[0]
-                                    ? styles.selected
-                                    : ""
+                            className={`${styles.day} ${day.date && bookingData.date === formatLocalDate(day.date)
+                                ? styles.selected
+                                : ""
                                 } ${day.isToday ? styles.today : ""} ${day.isDisabled ? styles.disabled : ""}`}
                             onClick={() => day.date && !day.isDisabled && handleDateSelect(day.date)}
                             disabled={day.isDisabled || !day.date}
@@ -181,7 +264,9 @@ export default function DateTimeStep({
                     <h3 className={styles.timeTitle}>
                         שעות פנויות ב-{formatSelectedDate()}
                     </h3>
-                    {timeSlots.length === 0 ? (
+                    {loadingSlots ? (
+                        <p className={styles.noSlots}>טוען...</p>
+                    ) : timeSlots.length === 0 ? (
                         <p className={styles.noSlots}>אין שעות פנויות ביום זה</p>
                     ) : (
                         <div className={styles.timeGrid}>
