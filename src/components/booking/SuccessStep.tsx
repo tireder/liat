@@ -9,6 +9,7 @@ interface SuccessStepProps {
     bookingData: BookingData;
     address?: string;
     businessName?: string;
+    isReschedule?: boolean;
 }
 
 const HEBREW_DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
@@ -17,7 +18,7 @@ const HEBREW_MONTHS = [
     "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"
 ];
 
-export default function SuccessStep({ bookingData, address, businessName }: SuccessStepProps) {
+export default function SuccessStep({ bookingData, address, businessName, isReschedule = false }: SuccessStepProps) {
     const formatDate = () => {
         if (!bookingData.date) return "";
         const d = new Date(bookingData.date);
@@ -75,7 +76,7 @@ END:VCALENDAR`;
 
             {/* Message */}
             <div className={styles.message}>
-                <h1 className={styles.title}>התור נקבע בהצלחה!</h1>
+                <h1 className={styles.title}>{isReschedule ? "התור שונה בהצלחה!" : "התור נקבע בהצלחה!"}</h1>
                 <p className={styles.subtitle}>
                     נשלחה אליך הודעת אישור
                 </p>

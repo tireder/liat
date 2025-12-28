@@ -10,6 +10,7 @@ interface DateTimeStepProps {
     updateBookingData: (data: Partial<BookingData>) => void;
     onNext: () => void;
     onBack: () => void;
+    rescheduleMode?: boolean;
 }
 
 const HEBREW_DAYS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
@@ -84,6 +85,7 @@ export default function DateTimeStep({
     updateBookingData,
     onNext,
     onBack,
+    rescheduleMode = false,
 }: DateTimeStepProps) {
     const [currentMonth, setCurrentMonth] = useState(() => {
         const now = new Date();
@@ -208,7 +210,7 @@ export default function DateTimeStep({
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h2 className={styles.title}>בחרי תאריך ושעה</h2>
+                <h2 className={styles.title}>{rescheduleMode ? "בחרי מועד חדש" : "בחרי תאריך ושעה"}</h2>
                 <p className={styles.subtitle}>{bookingData.serviceName} • {bookingData.serviceDuration} דקות</p>
             </div>
 

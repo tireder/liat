@@ -9,6 +9,7 @@ interface ConfirmStepProps {
     onConfirm: () => void;
     onBack: () => void;
     address?: string;
+    isReschedule?: boolean;
 }
 
 const HEBREW_DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
@@ -22,6 +23,7 @@ export default function ConfirmStep({
     onConfirm,
     onBack,
     address,
+    isReschedule = false,
 }: ConfirmStepProps) {
     const formatDate = () => {
         if (!bookingData.date) return "";
@@ -43,7 +45,7 @@ export default function ConfirmStep({
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h2 className={styles.title}>אישור התור</h2>
+                <h2 className={styles.title}>{isReschedule ? "אישור שינוי תור" : "אישור התור"}</h2>
                 <p className={styles.subtitle}>בדקי שהפרטים נכונים</p>
             </div>
 
@@ -129,7 +131,7 @@ export default function ConfirmStep({
                     חזרה
                 </button>
                 <button className="btn btn-primary" onClick={onConfirm}>
-                    אישור וקביעת תור
+                    {isReschedule ? "אישור שינוי" : "אישור וקביעת תור"}
                 </button>
             </div>
         </div>
