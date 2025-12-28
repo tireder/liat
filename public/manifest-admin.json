@@ -1,12 +1,12 @@
 {
-    "name": "ליאת ציפורנים",
-    "short_name": "ליאת",
-    "description": "סלון ציפורניים מקצועי - קביעת תורים וקורסים",
-    "start_url": "/",
+    "name": "ליאת ציפורנים - ניהול",
+    "short_name": "ניהול",
+    "description": "פאנל ניהול - ליאת ציפורנים",
+    "start_url": "/admin",
     "display": "standalone",
     "orientation": "portrait",
     "theme_color": "#1a1a2e",
-    "background_color": "#fdfbf7",
+    "background_color": "#1a1a2e",
     "dir": "rtl",
     "lang": "he",
     "icons": [
