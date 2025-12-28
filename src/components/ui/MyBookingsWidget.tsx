@@ -28,8 +28,11 @@ export default function MyBookingsWidget() {
 
         try {
             const parsed = JSON.parse(session);
-            // Check if session is still valid (7 days)
-            if (parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
+            // Check if session is still valid (7 days) - support both old and new format
+            const isValid = parsed.expiresAt
+                ? new Date(parsed.expiresAt) > new Date()
+                : parsed.expires > Date.now();
+            if (isValid) {
                 setIsLoggedIn(true);
                 // Fetch next booking
                 fetchNextBooking(parsed.phone);

@@ -56,8 +56,11 @@ export default function MyBookingsPage() {
                 const savedSession = localStorage.getItem("liart_session");
                 if (savedSession) {
                     const session = JSON.parse(savedSession);
-                    // Check if session is still valid (7 days)
-                    if (session.expires > Date.now()) {
+                    // Check if session is still valid (7 days) - support both old and new format
+                    const isValid = session.expiresAt
+                        ? new Date(session.expiresAt) > new Date()
+                        : session.expires > Date.now();
+                    if (isValid) {
                         const clientRes = await fetch(`/api/bookings/my?phone=${encodeURIComponent(session.phone)}`);
                         if (clientRes.ok) {
                             const clientData = await clientRes.json();
@@ -145,9 +148,11 @@ export default function MyBookingsPage() {
                 setError(data.error || "קוד שגוי");
             } else {
                 // Save session to localStorage (7 days)
+                const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString();
                 const session = {
                     phone,
-                    expires: Date.now() + (7 * 24 * 60 * 60 * 1000),
+                    name: phone,
+                    expiresAt,
                 };
                 localStorage.setItem("liart_session", JSON.stringify(session));
 

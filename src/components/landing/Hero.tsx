@@ -32,7 +32,11 @@ export default function Hero({ settings }: HeroProps) {
             const session = localStorage.getItem("liart_session");
             if (session) {
                 const parsed = JSON.parse(session);
-                if (parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
+                // Support both old and new format
+                const isValid = parsed.expiresAt
+                    ? new Date(parsed.expiresAt) > new Date()
+                    : parsed.expires > Date.now();
+                if (isValid) {
                     setUserName(parsed.name || null);
                 }
             }

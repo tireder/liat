@@ -40,11 +40,14 @@ export default function PhoneStep({
                 const savedSession = localStorage.getItem("liart_session");
                 if (savedSession) {
                     const session = JSON.parse(savedSession);
-                    // Check if session is still valid (7 days)
-                    if (session.expires > Date.now()) {
+                    // Check if session is still valid (7 days) - support both old and new format
+                    const isValid = session.expiresAt
+                        ? new Date(session.expiresAt) > new Date()
+                        : session.expires > Date.now();
+                    if (isValid) {
                         if (!mounted) return;
                         setPhone(session.phone);
-                        updateBookingData({ phone: session.phone, name: session.phone });
+                        updateBookingData({ phone: session.phone, name: session.name || session.phone });
                         setStep("verified");
                         setLoading(false);
                         // Give parent component time to update before moving to next step
@@ -157,7 +160,8 @@ export default function PhoneStep({
                     console.error("Verify Error:", verifyError);
                 } else {
                     // Save session to localStorage (7 days)
-                    const session = { phone, expires: Date.now() + (7 * 24 * 60 * 60 * 1000) };
+                    const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString();
+                    const session = { phone, name: phone, expiresAt };
                     localStorage.setItem("liart_session", JSON.stringify(session));
 
                     updateBookingData({ phone, name: phone });
@@ -180,7 +184,8 @@ export default function PhoneStep({
                     setError(data.error || "קוד שגוי. נסי שוב.");
                 } else {
                     // Save session to localStorage (7 days)
-                    const session = { phone, expires: Date.now() + (7 * 24 * 60 * 60 * 1000) };
+                    const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString();
+                    const session = { phone, name: phone, expiresAt };
                     localStorage.setItem("liart_session", JSON.stringify(session));
 
                     updateBookingData({ phone, name: phone });
