@@ -14,8 +14,8 @@ pnpm dev
 bun dev
 ```
 ```
+fixed
 changes
-add da
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
