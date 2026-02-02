@@ -4,6 +4,7 @@
     background: var(--background);
     display: flex;
     flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Header */
@@ -12,6 +13,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.25rem;
+    padding-top: calc(1rem + env(safe-area-inset-top));
     background: var(--background-card);
     border-bottom: 1px solid var(--border-color);
     position: sticky;
