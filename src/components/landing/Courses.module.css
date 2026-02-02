@@ -50,22 +50,49 @@
 /* List */
 .list {
     display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    overflow-x: auto;
+    gap: 1.25rem;
+    padding: 0.5rem var(--container-padding);
+    margin: 0 calc(var(--container-padding) * -1);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.list::-webkit-scrollbar {
+    display: none;
 }
 
 /* Card */
 .card {
+    flex: 0 0 300px;
+    scroll-snap-align: center;
     position: relative;
     background: var(--background-card);
     border-radius: var(--radius-xl);
-    padding: 1.75rem;
+    padding: 1.5rem;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
     transition: all 0.25s ease;
     animation: fadeInUp 0.5s ease forwards;
     opacity: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .list {
+        display: flex;
+        flex-direction: column;
+        overflow-x: visible;
+        padding: 0;
+        margin: 0;
+    }
+
+    .card {
+        flex: none;
+    }
 }
 
 @keyframes fadeInUp {
