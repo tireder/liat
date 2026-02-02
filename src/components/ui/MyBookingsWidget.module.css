@@ -6,6 +6,12 @@
     animation: slideIn 0.3s ease-out;
 }
 
+@media (max-width: 1023px) {
+    .widget {
+        bottom: calc(64px + 16px + env(safe-area-inset-bottom));
+    }
+}
+
 @keyframes slideIn {
     from {
         transform: translateX(-100%);
