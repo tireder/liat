@@ -18,7 +18,7 @@
 
   /* Backgrounds */
   --background: #fdfcfb;
-  --background-card: #ffffff;
+  --background-card: #ffffaff;
   --background-dark: #2d2926;
   --background-alt: #f9f6f4;
 
@@ -90,6 +90,25 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  padding-bottom: 70px; /* Space for bottom nav */
+}
+
+@media (min-width: 1024px) {
+  body {
+    padding-bottom: 0;
+  }
+}
+
+/* Touch-specific resets for native feel */
+@media (max-width: 1023px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  
+  input, textarea {
+    -webkit-user-select: text;
+  }
 }
 
 /* Focus States for Accessibility */
