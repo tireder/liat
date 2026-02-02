@@ -50,15 +50,14 @@
 /* Grid */
 .grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.875rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
 }
 
 /* Image Card */
 .imageCard {
     position: relative;
     aspect-ratio: 1;
-    border-radius: var(--radius-lg);
     overflow: hidden;
     cursor: pointer;
     border: none;
