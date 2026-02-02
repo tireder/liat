@@ -17,6 +17,14 @@
     transition: transform 0.2s ease, background 0.2s ease;
 }
 
+@media (max-width: 1023px) {
+    .floatingBtn {
+        bottom: calc(64px + 16px + env(safe-area-inset-bottom));
+        right: 20px;
+        left: auto;
+    }
+}
+
 .floatingBtn:hover {
     transform: scale(1.1);
     background: var(--color-primary-dark);
@@ -52,6 +60,15 @@
     z-index: 1001;
     animation: slideUp 0.2s ease;
     overflow: hidden;
+}
+
+
+@media (max-width: 1023px) {
+    .menu {
+        bottom: calc(64px + 76px + env(safe-area-inset-bottom));
+        right: 20px;
+        left: auto;
+    }
 }
 
 @keyframes slideUp {
