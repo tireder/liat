@@ -50,23 +50,17 @@ export async function GET() {
 
         if (weekError) console.error("Week error:", weekError);
 
-        const year = new Date().getFullYear();
-        const monthNum = new Date().getMonth() + 1;
-        const monthStr = String(monthNum).padStart(2, '0');
-        const lastDay = new Date(year, monthNum, 0).getDate();
-        const lastDayStr = String(lastDay).padStart(2, '0');
+        const monthStart = new Date();
+        monthStart.setDate(1); // First day
+        const monthEnd = new Date(monthStart);
+        monthEnd.setMonth(monthEnd.getMonth() + 1); // First day next month
 
-        const monthStartStr = `${year}-${monthStr}-01`;
-        const monthEndStr = `${year}-${monthStr}-${lastDayStr}`;
-
-        const { data: monthBookingsData, count: monthTotalCount, error: monthError } = await supabase
+        const { count: monthTotalCount, error: monthError } = await supabase
             .from("bookings")
-            .select(`*, client:clients(name, phone), service:services(name)`, { count: "exact" })
-            .gte("date", monthStartStr)
-            .lte("date", monthEndStr)
-            .in("status", ["confirmed", "pending", "pending_change"])
-            .order("date")
-            .order("start_time");
+            .select("*", { count: "exact", head: true })
+            .gte("date", monthStart.toISOString().split("T")[0])
+            .lt("date", monthEnd.toISOString().split("T")[0])
+            .in("status", ["confirmed", "pending", "pending_change"]);
 
         if (monthError) console.error("Month error:", monthError);
 
@@ -99,15 +93,6 @@ export async function GET() {
                 requestedDate: b.requested_date,
                 requestedTime: b.requested_time,
                 type: b.requested_date ? "reschedule" : "cancel",
-            })) || [],
-            monthBookings: (monthBookingsData as BookingRow[] | null)?.map((b) => ({
-                id: b.id,
-                time: b.start_time,
-                date: b.date,
-                client: b.client?.name || b.client?.phone || "לקוח",
-                phone: b.client?.phone || "",
-                service: b.service?.name || "שירות",
-                status: b.status,
             })) || [],
             weekStats,
         });
