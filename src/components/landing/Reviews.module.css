@@ -1,0 +1,159 @@
+/* Enhanced Reviews CSS */
+.section {
+    padding: 5rem 1.5rem;
+    background: linear-gradient(135deg, #fffcfb 0%, #fdf2ed 100%);
+    overflow: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.title {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #1a1a2e;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 2.5rem;
+    font-size: 1.1rem;
+}
+
+.loading {
+    text-align: center;
+    color: #888;
+    padding: 2rem;
+}
+
+.summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 3rem;
+    background: white;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1rem 2rem;
+    border-radius: full;
+    border-radius: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.stars {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.star {
+    font-size: 1.75rem;
+    color: #ddd;
+    transition: color 0.3s ease;
+}
+
+.star.filled {
+    color: #ffb400;
+    filter: drop-shadow(0 2px 4px rgba(255, 180, 0, 0.2));
+}
+
+.rating {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-top: 0.25rem;
+}
+
+.count {
+    color: #888;
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .grid {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 1.5rem;
+        -webkit-overflow-scrolling: touch;
+        gap: 1rem;
+    }
+}
+
+.card {
+    background: white;
+    border-radius: 1.5rem;
+    padding: 1.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    min-width: 280px;
+    scroll-snap-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.name {
+    font-weight: 700;
+    color: #1a1a2e;
+    font-size: 1.1rem;
+}
+
+.cardStars {
+    display: flex;
+    gap: 0.125rem;
+}
+
+.starFilled {
+    color: #ffb400;
+    font-size: 0.9rem;
+}
+
+.starEmpty {
+    color: #eee;
+    font-size: 0.9rem;
+}
+
+.comment {
+    color: #4a4a4a;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+    font-style: italic;
+    background: #fafafa;
+    padding: 1rem;
+    border-radius: 1rem;
+}
+
+.date {
+    font-size: 0.8rem;
+    color: #aaa;
+    text-align: left;
+    margin-top: auto;
+}

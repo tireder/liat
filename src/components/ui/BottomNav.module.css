@@ -1,0 +1,111 @@
+/* Bottom Navigation - Mobile Only */
+.bottomNav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: var(--background-card);
+    border-top: 1px solid var(--border-color);
+    padding: 0.5rem 0;
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    z-index: 900;
+    /* Below accessibility widget (999) */
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease;
+}
+
+.bottomNav.hidden {
+    transform: translateY(100%);
+}
+
+.navItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    text-decoration: none;
+    color: var(--foreground-muted);
+    transition: all 0.2s ease;
+    min-width: 56px;
+    min-height: 44px;
+    /* Touch target */
+    border-radius: var(--radius-md);
+}
+
+.navItem:hover {
+    color: var(--color-primary);
+}
+
+.navItem.active {
+    color: var(--color-primary);
+}
+
+.navItem.active .icon {
+    transform: scale(1.1);
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    transition: transform 0.2s ease;
+}
+
+.icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.label {
+    font-size: 0.625rem;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+/* Active indicator dot */
+.navItem.active::after {
+    content: "";
+    position: absolute;
+    bottom: 0.25rem;
+    width: 4px;
+    height: 4px;
+    background: var(--color-primary);
+    border-radius: 50%;
+}
+
+/* Hide on desktop */
+@media (min-width: 768px) {
+    .bottomNav {
+        display: none;
+    }
+}
+
+/* Adjust for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .bottomNav {
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* High contrast mode support */
+:global(html.high-contrast) .bottomNav {
+    background: #000;
+    border-top-color: #fff;
+}
+
+:global(html.high-contrast) .navItem {
+    color: #ccc;
+}
+
+:global(html.high-contrast) .navItem.active {
+    color: #ffd700;
+}

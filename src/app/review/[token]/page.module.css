@@ -1,0 +1,153 @@
+.page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fdf8f6 0%, #f5ebe6 100%);
+}
+
+.card {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.card h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    color: #1a1a1a;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.successIcon {
+    width: 64px;
+    height: 64px;
+    background: #c9a8a0;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1rem;
+}
+
+.starsContainer {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.star {
+    font-size: 2.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ddd;
+    transition: all 0.15s;
+    padding: 0.25rem;
+}
+
+.star:hover,
+.star.filled {
+    color: #f5b942;
+    transform: scale(1.1);
+}
+
+.ratingText {
+    font-size: 0.875rem;
+    color: #888;
+    margin-bottom: 1.5rem;
+    min-height: 1.25rem;
+}
+
+.commentInput {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    resize: none;
+    margin-bottom: 1rem;
+    font-family: inherit;
+}
+
+.commentInput:focus {
+    outline: none;
+    border-color: #c9a8a0;
+}
+
+.error {
+    color: #e53e3e;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.submitBtn {
+    width: 100%;
+    padding: 1rem;
+    background: #c9a8a0;
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.submitBtn:hover {
+    opacity: 0.9;
+}
+
+.submitBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.privacyNote {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 1rem;
+}
+
+.bookBtn {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background: #c9a8a0;
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 1.5rem;
+    transition: opacity 0.2s;
+}
+
+.bookBtn:hover {
+    opacity: 0.9;
+}
+
+.homeLink {
+    display: inline-block;
+    margin-top: 1rem;
+    color: #888;
+    font-size: 0.875rem;
+    text-decoration: none;
+}
+
+.homeLink:hover {
+    color: #c9a8a0;
+}

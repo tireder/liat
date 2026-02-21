@@ -1,0 +1,187 @@
+/* Skeleton Loading Styles */
+.skeleton {
+    background: linear-gradient(90deg,
+            var(--background-secondary) 25%,
+            var(--border-color) 50%,
+            var(--background-secondary) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    border-radius: 0.5rem;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Loading Container */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Section wrapper */
+.section {
+    padding: 3rem 1rem;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Hero Skeleton */
+.heroSkeleton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem 1rem;
+    text-align: center;
+}
+
+.heroSkeleton .badge {
+    width: 120px;
+    height: 28px;
+}
+
+.heroSkeleton .title {
+    width: 300px;
+    height: 48px;
+    max-width: 90%;
+}
+
+.heroSkeleton .subtitle {
+    width: 400px;
+    height: 24px;
+    max-width: 80%;
+}
+
+.heroSkeleton .button {
+    width: 180px;
+    height: 48px;
+    border-radius: 2rem;
+    margin-top: 1rem;
+}
+
+/* Card Grid Skeleton */
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.cardSkeleton {
+    background: var(--background);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.cardSkeleton .icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.75rem;
+}
+
+.cardSkeleton .title {
+    width: 70%;
+    height: 24px;
+}
+
+.cardSkeleton .description {
+    width: 100%;
+    height: 16px;
+}
+
+.cardSkeleton .description:last-of-type {
+    width: 60%;
+}
+
+.cardSkeleton .meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.cardSkeleton .tag {
+    width: 80px;
+    height: 20px;
+    border-radius: 1rem;
+}
+
+.cardSkeleton .price {
+    width: 60px;
+    height: 24px;
+}
+
+/* Gallery Skeleton */
+.gallerySkeleton {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.galleryItem {
+    aspect-ratio: 1;
+    border-radius: 0.75rem;
+}
+
+/* Section Header Skeleton */
+.sectionHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.sectionHeader .badge {
+    width: 100px;
+    height: 24px;
+    border-radius: 1rem;
+}
+
+.sectionHeader .title {
+    width: 200px;
+    height: 32px;
+}
+
+.sectionHeader .divider {
+    width: 60px;
+    height: 4px;
+    border-radius: 2px;
+}
+
+/* Page Loading */
+.pageLoading {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.pageLoading .section {
+    padding: 3rem 1rem;
+}
+
+@media (max-width: 768px) {
+    .cardGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .gallerySkeleton {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

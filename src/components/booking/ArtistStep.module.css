@@ -1,0 +1,97 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
+}
+
+.subtitle {
+    text-align: center;
+    color: var(--foreground-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.artistList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.artistCard {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    direction: rtl;
+}
+
+.artistCard:hover {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.artistCard.selected {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 8%, var(--card));
+}
+
+.artistAvatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--background)));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.artistInfo {
+    flex: 1;
+}
+
+.artistName {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--foreground);
+}
+
+.artistServices {
+    font-size: 0.85rem;
+    color: var(--foreground-muted);
+    margin-top: 0.25rem;
+}
+
+.checkmark {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.artistCard.selected .checkmark {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}

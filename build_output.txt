@@ -1,0 +1,79 @@
+﻿
+> liart@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.1 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 1424.4ms
+  Running TypeScript ...
+  Collecting page data using 27 workers ...
+  Generating static pages using 27 workers (0/35) ...
+  Generating static pages using 27 workers (8/35) 
+node.exe : Error fetching settings: Error: Missing 
+Supabase admin credentials
+At C:\Users\Michael\AppData\Roaming\npm\npm.ps1:24 
+char:5
++     & "node$exe"  
+"$basedir/node_modules/npm/bin/npm-cli.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error fet 
+   ching ...min credentials:String) [], RemoteExcepti  
+  on
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    at <unknown> (D:\Projects\Liart\.next\server\chunks
+\ssr\_d2890a94._.js:58:46762)
+    at cu (D:\Projects\Liart\.next\server\chunks\ssr\_d
+2890a94._.js:58:46872)
+    at cv (D:\Projects\Liart\.next\server\chunks\ssr\_d
+2890a94._.js:58:47311)
+    at stringify (<anonymous>)
+  Generating static pages using 27 workers (17/35) 
+  Generating static pages using 27 workers (26/35) 
+Γ£ô Generating static pages using 27 workers (35/35) in 196.6ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /accessibility
+Γö£ Γùï /admin
+Γö£ Γùï /admin-login
+Γö£ ╞Æ /api/admin/bookings
+Γö£ ╞Æ /api/admin/clients
+Γö£ ╞Æ /api/admin/courses
+Γö£ ╞Æ /api/admin/dashboard
+Γö£ ╞Æ /api/admin/gallery
+Γö£ ╞Æ /api/admin/holidays
+Γö£ ╞Æ /api/admin/services
+Γö£ ╞Æ /api/admin/settings
+Γö£ ╞Æ /api/admin/sms/send
+Γö£ ╞Æ /api/auth/send-otp
+Γö£ ╞Æ /api/bookings
+Γö£ ╞Æ /api/bookings/[id]
+Γö£ ╞Æ /api/bookings/available
+Γö£ ╞Æ /api/bookings/my
+Γö£ ╞Æ /api/courses
+Γö£ ╞Æ /api/courses/[id]/register
+Γö£ ╞Æ /api/cron/keep-alive
+Γö£ ╞Æ /api/cron/reminders
+Γö£ ╞Æ /api/gallery
+Γö£ ╞Æ /api/otp/send
+Γö£ ╞Æ /api/otp/verify
+Γö£ ╞Æ /api/services
+Γö£ ╞Æ /api/settings
+Γö£ Γùï /book
+Γö£ Γùï /cancellation
+Γö£ Γùï /courses
+Γö£ Γùï /gallery
+Γö£ Γùï /my-bookings
+Γö£ Γùï /privacy
+Γöö Γùï /terms
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

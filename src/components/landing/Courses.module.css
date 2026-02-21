@@ -1,0 +1,243 @@
+.section {
+    padding: 5rem 1.25rem;
+    background: var(--background-alt);
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-accent);
+    color: var(--color-accent-dark);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-radius: 9999px;
+    margin-bottom: 1rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--foreground);
+    margin-bottom: 0.75rem;
+}
+
+.subtitle {
+    font-size: 1.0625rem;
+    color: var(--foreground-muted);
+}
+
+.divider {
+    width: 48px;
+    height: 2px;
+    background: var(--color-primary);
+    border-radius: 9999px;
+    margin: 1.5rem auto 0;
+}
+
+/* List */
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Card */
+.card {
+    position: relative;
+    background: var(--background-card);
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.25s ease;
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+    overflow: hidden;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+/* Status Badge */
+.statusBadge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+}
+
+.statusBadge[data-status="full"] {
+    background: #fce8e8;
+    color: #c53030;
+}
+
+.statusBadge[data-status="limited"] {
+    background: #fef3e2;
+    color: #b45309;
+}
+
+/* Card Header */
+.cardHeader {
+    margin-bottom: 1.25rem;
+}
+
+.cardTitle {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--foreground);
+    margin-bottom: 0.5rem;
+}
+
+.cardDescription {
+    font-size: 0.9375rem;
+    color: var(--foreground-muted);
+    line-height: 1.6;
+}
+
+/* Highlights */
+.highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.highlight {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    background: var(--color-accent);
+    color: var(--color-accent-dark);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-radius: 9999px;
+}
+
+/* Meta */
+.cardMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.25rem;
+}
+
+.metaRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--foreground-muted);
+}
+
+/* Footer */
+.cardFooter {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.priceContainer {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.priceLabel {
+    font-size: 0.8125rem;
+    color: var(--foreground-muted);
+}
+
+.price {
+    font-size: 1.625rem;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+}
+
+.registerBtn {
+    width: 100%;
+}
+
+.registerBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Capacity Bar */
+.capacityBar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--border-color);
+}
+
+.capacityFill {
+    height: 100%;
+    background: var(--color-primary);
+    transition: width 0.3s ease;
+}
+
+/* Responsive */
+@media (min-width: 640px) {
+    .cardFooter {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .registerBtn {
+        width: auto;
+        min-width: 160px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .section {
+        padding: 7rem 2rem;
+    }
+
+    .title {
+        font-size: 2.5rem;
+    }
+}

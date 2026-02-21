@@ -1,0 +1,26 @@
+{
+    "name": "ליאת ציפורנים - ניהול",
+    "short_name": "ניהול",
+    "description": "פאנל ניהול - ליאת ציפורנים",
+    "start_url": "/admin",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "#1a1a2e",
+    "background_color": "#1a1a2e",
+    "dir": "rtl",
+    "lang": "he",
+    "icons": [
+        {
+            "src": "/icona-512.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icona-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

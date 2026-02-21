@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ליאת | מדריך המערכת</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            line-height: 1.7;
+            color: #1a1a2e;
+            background: #fdf8f6;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 2.5rem; color: #c9a8a0; margin-bottom: 0.5rem; text-align: center; }
+        h2 { font-size: 1.5rem; color: #c9a8a0; margin: 2rem 0 1rem; border-bottom: 2px solid #c9a8a0; padding-bottom: 0.5rem; }
+        h3 { font-size: 1.1rem; color: #1a1a2e; margin: 1.5rem 0 0.75rem; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 2rem; }
+        .card { background: white; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+        .feature { background: #f8f4f2; padding: 1rem; border-radius: 0.75rem; }
+        .feature-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .feature-title { font-weight: 600; margin-bottom: 0.25rem; }
+        .feature-desc { font-size: 0.875rem; color: #666; }
+        ul { padding-right: 1.5rem; margin: 0.5rem 0; }
+        li { margin: 0.5rem 0; }
+        .highlight { background: #fff9c4; padding: 0.2rem 0.5rem; border-radius: 0.25rem; }
+        .tag { display: inline-block; background: #c9a8a0; color: white; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; margin-left: 0.5rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 0.75rem; text-align: right; border-bottom: 1px solid #eee; }
+        th { background: #f8f4f2; font-weight: 600; }
+        .emoji { font-size: 1.25rem; }
+        @media print {
+            body { background: white; padding: 1rem; }
+            .card { box-shadow: none; border: 1px solid #eee; }
+        }
+    </style>
+</head>
+<body>
+
+<h1>💅 ליאת | Nail Artist</h1>
+<p class="subtitle">מערכת ניהול תורים ולקוחות לסלון ציפורניים</p>
+
+<div class="card">
+    <h2>🌟 סקירה כללית</h2>
+    <p>מערכת מודרנית לניהול סלון ציפורניים הכוללת:</p>
+    <div class="feature-grid" style="margin-top: 1rem;">
+        <div class="feature">
+            <div class="feature-icon">📅</div>
+            <div class="feature-title">מערכת תורים</div>
+            <div class="feature-desc">קביעת תורים אונליין עם זמינות בזמן אמת</div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">📱</div>
+            <div class="feature-title">הודעות SMS</div>
+            <div class="feature-desc">תזכורות ואישורים אוטומטיים</div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">👩‍💼</div>
+            <div class="feature-title">פאנל ניהול</div>
+            <div class="feature-desc">ניהול מלא של התורים והלקוחות</div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🎓</div>
+            <div class="feature-title">קורסים</div>
+            <div class="feature-desc">ניהול והרשמה לקורסים</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📅 מערכת התורים</h2>
+    
+    <h3>קביעת תור (לקוח)</h3>
+    <ul>
+        <li><strong>בחירת שירות</strong> - הלקוח בוחר את סוג הטיפול המבוקש</li>
+        <li><strong>בחירת תאריך</strong> - שבועיים קדימה, ללא ימי שישי-שבת וחגים</li>
+        <li><strong>בחירת שעה</strong> - רק שעות פנויות מוצגות</li>
+        <li><strong>אימות טלפון</strong> - קוד OTP נשלח לטלפון</li>
+        <li><strong>אישור</strong> - התור נשמר ו-SMS אישור נשלח</li>
+    </ul>
+
+    <h3>ניהול תורים (אדמין)</h3>
+    <ul>
+        <li><strong>אישור תורים</strong> - תורים חדשים מחכים לאישור</li>
+        <li><strong>עריכת תור</strong> - שינוי תאריך/שעה</li>
+        <li><strong>ביטול</strong> - ביטול עם הודעה אוטומטית ללקוח</li>
+        <li><strong>סימון כהושלם</strong> - שולח בקשה לביקורת ללקוח</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h2>📱 מערכת ה-SMS</h2>
+    
+    <table>
+        <tr>
+            <th>סוג הודעה</th>
+            <th>מתי נשלחת</th>
+            <th>ניתן לביטול</th>
+        </tr>
+        <tr>
+            <td>אישור תור</td>
+            <td>מיד לאחר קביעה</td>
+            <td>❌ לא</td>
+        </tr>
+        <tr>
+            <td>תזכורת יום לפני</td>
+            <td>יום לפני התור ב-10:00</td>
+            <td>❌ לא</td>
+        </tr>
+        <tr>
+            <td>שינוי/ביטול</td>
+            <td>בעת עדכון ע"י האדמין</td>
+            <td>❌ לא</td>
+        </tr>
+        <tr>
+            <td>בקשה לביקורת</td>
+            <td>לאחר סימון "הושלם"</td>
+            <td>✅ כן</td>
+        </tr>
+        <tr>
+            <td>תזכורת לחזור</td>
+            <td>X ימים אחרי הטיפול</td>
+            <td>✅ כן</td>
+        </tr>
+        <tr>
+            <td>הודעות שיווקיות</td>
+            <td>שליחה ידנית</td>
+            <td>✅ כן</td>
+        </tr>
+    </table>
+    
+    <p style="margin-top: 1rem;"><strong>ביטול הרשמה:</strong> לקוחות יכולים לנהל העדפות SMS בכתובת <span class="highlight">/unsubscribe</span></p>
+</div>
+
+<div class="card">
+    <h2>👩‍💼 פאנל הניהול</h2>
+    
+    <h3>לוח בקרה</h3>
+    <ul>
+        <li>תורים להיום</li>
+        <li>תורים ממתינים לאישור</li>
+        <li>סטטיסטיקה שבועית/חודשית (לחיצה מציגה פרטים)</li>
+    </ul>
+
+    <h3>ניהול שירותים</h3>
+    <ul>
+        <li>הוספה/עריכה/מחיקה של שירותים</li>
+        <li>הגדרת מחיר ומשך זמן</li>
+        <li>הגדרת "ימים לתזכורת" - כמה ימים אחרי הטיפול לשלוח תזכורת לחזור</li>
+    </ul>
+
+    <h3>ניהול לקוחות</h3>
+    <ul>
+        <li>רשימת כל הלקוחות עם מספר תורים</li>
+        <li><strong>הערות</strong> - לחיצה על 📝 פותחת היסטוריית הערות</li>
+        <li>שליחת SMS לכל הלקוחות או לנבחרים</li>
+    </ul>
+
+    <h3>גלריה</h3>
+    <ul>
+        <li>העלאת תמונות</li>
+        <li>בחירת קטגוריה (ג'ל, אקריליק, נייל ארט, וכו')</li>
+        <li>סינון לפי קטגוריה</li>
+    </ul>
+
+    <h3>חסימת תאריכים</h3>
+    <ul>
+        <li>חסימת ימים ספציפיים (חופשה, חגים)</li>
+        <li>חסימת טווח תאריכים</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h2>⭐ מערכת ביקורות</h2>
+    
+    <h3>תהליך</h3>
+    <ol>
+        <li>אדמין מסמן תור כ"הושלם"</li>
+        <li>SMS נשלח אוטומטית ללקוח עם קישור לביקורת</li>
+        <li>הלקוח נותן דירוג (1-5 כוכבים) ותגובה אופציונלית</li>
+        <li>לאחר השליחה - כפתור "קביעת תור חדש"</li>
+    </ol>
+    
+    <p style="margin-top: 1rem;"><strong>דף ביקורת:</strong> <span class="highlight">/review/[token]</span></p>
+</div>
+
+<div class="card">
+    <h2>🖼️ תכונות נוספות</h2>
+    
+    <h3>רשימת המתנה (Waitlist)</h3>
+    <p>כאשר אין תורים פנויים, לקוחות יכולים להירשם לרשימת המתנה ולקבל הודעה כשיתפנה מקום.</p>
+    
+    <h3>תמונות לפני/אחרי</h3>
+    <p>רכיב סליידר גרירה להשוואת תמונות לפני ואחרי טיפול.</p>
+    
+    <h3>סנכרון יומן</h3>
+    <p>לקוחות יכולים להוסיף את התור ליומן Google.</p>
+</div>
+
+<div class="card">
+    <h2>🔧 הגדרות טכניות</h2>
+    
+    <h3>קבצי מסד נתונים</h3>
+    <ul>
+        <li><code>supabase/schema.sql</code> - טבלאות בסיסיות</li>
+        <li><code>database_reminder_migration.sql</code> - מערכת תזכורות</li>
+        <li><code>database_new_features_migration.sql</code> - תכונות חדשות</li>
+    </ul>
+
+    <h3>Cron Jobs (לביצוע חיצוני)</h3>
+    <table>
+        <tr>
+            <th>נתיב</th>
+            <th>תפקיד</th>
+            <th>תזמון מומלץ</th>
+        </tr>
+        <tr>
+            <td>/api/cron/reminders</td>
+            <td>תזכורות יום לפני</td>
+            <td>כל יום ב-10:00</td>
+        </tr>
+        <tr>
+            <td>/api/cron/return-reminders</td>
+            <td>תזכורות לחזור</td>
+            <td>כל יום ב-11:00</td>
+        </tr>
+        <tr>
+            <td>/api/cron/keep-alive</td>
+            <td>שמירת חיבור DB</td>
+            <td>כל 10 דקות</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card" style="text-align: center; background: #c9a8a0; color: white;">
+    <h2 style="color: white; border: none;">💕 נבנה עם אהבה</h2>
+    <p>פברואר 2026 | גרסה 2.0</p>
+</div>
+
+</body>
+</html>
