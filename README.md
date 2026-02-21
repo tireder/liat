@@ -7,7 +7,7 @@ A modern, mobile-first booking system for nail artists with SMS notifications, c
 ![Supabase](https://img.shields.io/badge/Database-Supabase-green)
 
 ---
-
+r
 ## ✨ Features
 
 ### 📅 Booking System
