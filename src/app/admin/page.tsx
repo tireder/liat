@@ -162,6 +162,7 @@ function AdminContent() {
     }
 
     const todayBookings = dashboardData?.todayBookings || [];
+    const monthBookings = dashboardData?.monthBookings || [];
     const pendingApprovals = dashboardData?.pendingApprovals || [];
     const weekStats = dashboardData?.weekStats || { total: 0, confirmed: 0, completed: 0, cancelled: 0, pending: 0 };
 
@@ -299,6 +300,40 @@ function AdminContent() {
                                             {todayBookings.map((booking) => (
                                                 <div key={booking.id} className={styles.bookingCard}>
                                                     <div className={styles.bookingTime}>{booking.time}</div>
+                                                    <div className={styles.bookingInfo}>
+                                                        <span className={styles.bookingClient}>{booking.client}</span>
+                                                        <span className={styles.bookingService}>{booking.service}</span>
+                                                    </div>
+                                                    <div className={styles.bookingMeta}>
+                                                        <a href={`tel:${booking.phone}`} className={styles.bookingPhone}>
+                                                            {booking.phone}
+                                                        </a>
+                                                        <span
+                                                            className={styles.bookingStatus}
+                                                            data-status={booking.status}
+                                                        >
+                                                            {booking.status === "confirmed" ? "מאושר" : "ממתין"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+
+                                {/* Month's Bookings */}
+                                <section className={styles.section}>
+                                    <h2 className={styles.sectionTitle}>תורי החודש</h2>
+                                    {monthBookings.length === 0 ? (
+                                        <p style={{ color: "var(--foreground-muted)", textAlign: "center" }}>אין תורים החודש</p>
+                                    ) : (
+                                        <div className={styles.bookingList}>
+                                            {monthBookings.map((booking: any) => (
+                                                <div key={booking.id} className={styles.bookingCard}>
+                                                    <div className={styles.bookingTime}>
+                                                        <span>{new Date(booking.date).toLocaleDateString("he-IL", { weekday: "short", day: "numeric" })}</span>
+                                                        <span>{booking.time}</span>
+                                                    </div>
                                                     <div className={styles.bookingInfo}>
                                                         <span className={styles.bookingClient}>{booking.client}</span>
                                                         <span className={styles.bookingService}>{booking.service}</span>
