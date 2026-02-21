@@ -1,6 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Only treat .ts/.tsx files as pages — prevents css-tree's page.js
+  // (inside app/node_modules) from being discovered as a Next.js page.
+  pageExtensions: ['ts', 'tsx'],
+  // Fix: stop Next.js from walking up to C:\Users\Michael and treating it
+  // as the workspace root (due to a stray package-lock.json there).
+  turbopack: {
+    root: __dirname,
+  },
+  outputFileTracingRoot: __dirname,
+  // Exclude the Expo mobile app directory and its node_modules from tracing
+  outputFileTracingExcludes: {
+    "*": ["./app/**/*"],
+  },
   images: {
     remotePatterns: [
       {
