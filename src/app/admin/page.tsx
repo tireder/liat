@@ -22,6 +22,15 @@ interface DashboardData {
         service: string;
         status: string;
     }>;
+    monthBookings: Array<{
+        id: string;
+        time: string;
+        date: string;
+        client: string;
+        phone: string;
+        service: string;
+        status: string;
+    }>;
     pendingApprovals: Array<{
         id: string;
         client: string;
