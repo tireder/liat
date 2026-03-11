@@ -181,17 +181,24 @@ function AdminContent() {
         }
     }
 
+    function handleStatCardKeyDown(event: React.KeyboardEvent<HTMLDivElement>, period: "week" | "month") {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            fetchStatsBookings(period);
+        }
+    }
+
     // Don't render until auth is verified
     if (!authChecked) {
         return (
-            <div className={styles.page}>
+            <div className={styles.page} dir="rtl" lang="he">
                 <div className={styles.loading}>בודק הרשאות...</div>
             </div>
         );
     }
 
     return (
-        <div className={styles.page}>
+        <div className={styles.page} dir="rtl" lang="he">
             {/* Header */}
             <header className={styles.header}>
                 <div className={styles.headerContent}>
@@ -229,8 +236,10 @@ function AdminContent() {
                                     <div
                                         className={`${styles.statCard} ${styles.clickable}`}
                                         onClick={() => fetchStatsBookings("week")}
+                                        onKeyDown={(event) => handleStatCardKeyDown(event, "week")}
                                         role="button"
                                         tabIndex={0}
+                                        aria-label="הצג תורים לשבוע"
                                     >
                                         <span className={styles.statNumber}>{weekStats.confirmed}</span>
                                         <span className={styles.statLabel}>השבוע</span>
@@ -238,8 +247,10 @@ function AdminContent() {
                                     <div
                                         className={`${styles.statCard} ${styles.clickable}`}
                                         onClick={() => fetchStatsBookings("month")}
+                                        onKeyDown={(event) => handleStatCardKeyDown(event, "month")}
                                         role="button"
                                         tabIndex={0}
+                                        aria-label="הצג תורים לחודש"
                                     >
                                         <span className={styles.statNumber}>{weekStats.total}</span>
                                         <span className={styles.statLabel}>סה״כ החודש</span>
@@ -293,7 +304,7 @@ function AdminContent() {
                                 <section className={styles.section}>
                                     <h2 className={styles.sectionTitle}>תורים להיום</h2>
                                     {todayBookings.length === 0 ? (
-                                        <p style={{ color: "var(--foreground-muted)", textAlign: "center" }}>אין תורים להיום</p>
+                                        <p className={styles.emptyStateText}>אין תורים להיום</p>
                                     ) : (
                                         <div className={styles.bookingList}>
                                             {todayBookings.map((booking) => (
@@ -383,10 +394,12 @@ function AdminContent() {
             )}
 
             {/* Bottom Navigation */}
-            <nav className={styles.bottomNav}>
+            <nav className={styles.bottomNav} aria-label="ניווט ניהול">
                 <button
                     className={`${styles.navItem} ${activeTab === "dashboard" ? styles.active : ""}`}
                     onClick={() => setActiveTab("dashboard")}
+                    aria-label="לוח בקרה"
+                    aria-current={activeTab === "dashboard" ? "page" : undefined}
                 >
                     <CalendarIcon size={22} />
                     <span>לוח בקרה</span>
@@ -394,6 +407,8 @@ function AdminContent() {
                 <button
                     className={`${styles.navItem} ${activeTab === "bookings" ? styles.active : ""}`}
                     onClick={() => setActiveTab("bookings")}
+                    aria-label="תורים"
+                    aria-current={activeTab === "bookings" ? "page" : undefined}
                 >
                     <ClockIcon size={22} />
                     <span>תורים</span>
@@ -401,6 +416,8 @@ function AdminContent() {
                 <button
                     className={`${styles.navItem} ${activeTab === "services" ? styles.active : ""}`}
                     onClick={() => setActiveTab("services")}
+                    aria-label="שירותים"
+                    aria-current={activeTab === "services" ? "page" : undefined}
                 >
                     <NailPolishIcon size={22} />
                     <span>שירותים</span>
@@ -408,6 +425,8 @@ function AdminContent() {
                 <button
                     className={`${styles.navItem} ${activeTab === "courses" ? styles.active : ""}`}
                     onClick={() => setActiveTab("courses")}
+                    aria-label="קורסים"
+                    aria-current={activeTab === "courses" ? "page" : undefined}
                 >
                     <BookIcon size={22} />
                     <span>קורסים</span>
@@ -415,6 +434,8 @@ function AdminContent() {
                 <button
                     className={`${styles.navItem} ${activeTab === "gallery" ? styles.active : ""}`}
                     onClick={() => setActiveTab("gallery")}
+                    aria-label="גלריה"
+                    aria-current={activeTab === "gallery" ? "page" : undefined}
                 >
                     <ImageIcon size={22} />
                     <span>גלריה</span>
@@ -422,6 +443,8 @@ function AdminContent() {
                 <button
                     className={`${styles.navItem} ${activeTab === "clients" ? styles.active : ""}`}
                     onClick={() => setActiveTab("clients")}
+                    aria-label="לקוחות"
+                    aria-current={activeTab === "clients" ? "page" : undefined}
                 >
                     <PhoneIcon size={22} />
                     <span>לקוחות</span>
@@ -429,6 +452,8 @@ function AdminContent() {
                 <button
                     className={`${styles.navItem} ${activeTab === "reviews" ? styles.active : ""}`}
                     onClick={() => setActiveTab("reviews")}
+                    aria-label="ביקורות"
+                    aria-current={activeTab === "reviews" ? "page" : undefined}
                 >
                     <StarIcon size={22} />
                     <span>ביקורות</span>
@@ -446,6 +471,8 @@ function AdminContent() {
                     <button
                         className={`${styles.navItem} ${activeTab === "settings" ? styles.active : ""}`}
                         onClick={() => setActiveTab("settings")}
+                        aria-label="הגדרות"
+                        aria-current={activeTab === "settings" ? "page" : undefined}
                     >
                         <SettingsIcon size={22} />
                         <span>הגדרות</span>
@@ -455,6 +482,8 @@ function AdminContent() {
                     <button
                         className={`${styles.navItem} ${activeTab === "artists" ? styles.active : ""}`}
                         onClick={() => setActiveTab("artists")}
+                        aria-label="אמניות"
+                        aria-current={activeTab === "artists" ? "page" : undefined}
                     >
                         <span style={{ fontSize: "1.25rem" }}>👩‍🎨</span>
                         <span>אמניות</span>

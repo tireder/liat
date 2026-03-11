@@ -1,26 +1,28 @@
 /* Reviews View */
 .reviewsList {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    padding-bottom: 5rem;
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+    padding-bottom: 5.5rem;
     width: 100%;
 }
 
 .reviewCard {
-    background: white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border: 1px solid #f0f0f0;
+    background: var(--background-card);
+    border-radius: var(--radius-xl);
+    padding: 1rem;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 10%, transparent);
+    border: 1px solid var(--border-color);
     transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
     flex-direction: column;
+    direction: rtl;
+    text-align: right;
 }
 
 .reviewCard:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--foreground) 14%, transparent);
 }
 
 .reviewHeader {
@@ -38,11 +40,11 @@
 .reviewClient {
     font-weight: 600;
     color: var(--foreground);
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
 .reviewDate {
-    font-size: 0.85rem;
+    font-size: 0.8125rem;
     color: var(--foreground-muted);
 }
 
@@ -63,21 +65,22 @@
 
 .reviewComment {
     color: var(--foreground);
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
     flex-grow: 1;
-    font-size: 0.95rem;
-    background: #fdf8f6;
+    font-size: 0.9rem;
+    background: var(--background-elevated);
     padding: 0.75rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
 }
 
 .metaInfo {
     font-size: 0.8rem;
     color: var(--foreground-muted);
-    margin-bottom: 1rem;
+    margin-bottom: 0.875rem;
     padding-top: 0.5rem;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid var(--border-color);
 }
 
 .reviewActions {
@@ -89,48 +92,49 @@
 .approveBtn,
 .rejectBtn {
     flex: 1;
-    padding: 0.6rem;
-    border-radius: 0.5rem;
-    font-size: 0.9rem;
+    min-height: 44px;
+    padding: 0.65rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    border: none;
-    transition: opacity 0.2s;
+    border: 1px solid var(--border-color);
+    transition: opacity 0.2s, transform 0.2s;
 }
 
 .approveBtn {
-    background: #e6fffa;
-    color: #2c7a7b;
-    border: 1px solid #b2f5ea;
+    background: var(--color-accent);
+    color: var(--color-primary-dark);
+    border-color: var(--color-primary);
 }
 
 .approveBtn:hover {
-    background: #b2f5ea;
+    opacity: 0.92;
 }
 
 .rejectBtn {
-    background: #fff5f5;
-    color: #c53030;
-    border: 1px solid #feb2b2;
+    background: var(--background-elevated);
+    color: var(--foreground);
 }
 
 .rejectBtn:hover {
-    background: #feb2b2;
+    opacity: 0.92;
 }
 
 .deleteReviewBtn {
+    min-width: 44px;
+    min-height: 44px;
     padding: 0.6rem;
-    border-radius: 0.5rem;
-    background: #f7fafc;
-    color: #718096;
-    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    background: var(--background);
+    color: var(--foreground-muted);
+    border: 1px solid var(--border-color);
     cursor: pointer;
 }
 
 .deleteReviewBtn:hover {
-    background: #edf2f7;
-    color: #e53e3e;
-    border-color: #e53e3e;
+    background: var(--background-elevated);
+    color: var(--foreground);
 }
 
 .statusBadge {
@@ -143,16 +147,34 @@
 }
 
 .statusApproved {
-    background: #e6fffa;
-    color: #2c7a7b;
+    background: var(--color-accent);
+    color: var(--color-primary-dark);
 }
 
 .statusPending {
-    background: #fffaf0;
-    color: #dd6b20;
+    background: var(--background-elevated);
+    color: var(--foreground);
 }
 
 .statusRejected {
-    background: #fff5f5;
-    color: #c53030;
+    background: var(--background-elevated);
+    color: var(--foreground);
+}
+
+.approveBtn:focus-visible,
+.rejectBtn:focus-visible,
+.deleteReviewBtn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+    .reviewsList {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .reviewCard {
+        padding: 1.25rem;
+    }
 }

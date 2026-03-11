@@ -1445,3 +1445,282 @@
     font-size: 0.6875rem;
     border-radius: var(--radius-sm);
 }
+
+/* ===== Admin UI refresh (mobile-first + Hebrew RTL) ===== */
+.page {
+    direction: rtl;
+    text-align: right;
+    background: linear-gradient(180deg, var(--background) 0%, var(--background-elevated) 100%);
+}
+
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 80;
+    padding: 0.875rem 1rem;
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--background-card) 92%, transparent);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.headerTitle {
+    letter-spacing: normal;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.content {
+    padding: 1rem;
+    padding-bottom: 6.25rem;
+}
+
+.emptyStateText {
+    color: var(--foreground-muted);
+    text-align: center;
+    padding: 1.25rem 0.75rem;
+    font-size: 0.9375rem;
+}
+
+.stats {
+    gap: 0.625rem;
+    margin-bottom: 1.25rem;
+}
+
+.statCard {
+    border-radius: var(--radius-xl);
+    padding: 0.875rem 0.75rem;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.statNumber {
+    font-size: 1.5rem;
+    margin-bottom: 0.2rem;
+}
+
+.statLabel {
+    font-size: 0.78rem;
+}
+
+.section {
+    margin-bottom: 1.25rem;
+}
+
+.sectionTitle {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.pendingCard,
+.bookingCard,
+.serviceCard,
+.settingsSection,
+.clientCard,
+.holidayItem,
+.smsRecipients {
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.pendingCard {
+    align-items: flex-start;
+}
+
+.pendingActions {
+    align-self: center;
+}
+
+.approveBtn,
+.denyBtn,
+.editBtn,
+.deleteBtn,
+.removeHolidayBtn,
+.notesBtn,
+.homeBtn,
+.logoutBtn {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.bookingCard {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bookingMeta {
+    align-items: flex-start;
+}
+
+.bookingPhone {
+    direction: ltr;
+    unicode-bidi: plaintext;
+}
+
+.viewContainer {
+    gap: 0.875rem;
+}
+
+.filters,
+.categoryTabs {
+    scrollbar-width: thin;
+    padding-bottom: 0.25rem;
+}
+
+.filterBtn,
+.categoryTab {
+    min-height: 44px;
+    padding: 0.55rem 0.95rem;
+    font-weight: 500;
+}
+
+.bottomNav {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(80px, 1fr);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    gap: 0.125rem;
+    padding: 0.375rem 0.25rem calc(0.5rem + env(safe-area-inset-bottom));
+    background: var(--background-card);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -1px 3px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.navItem {
+    min-height: 56px;
+    min-width: 80px;
+    border-radius: var(--radius-lg);
+    margin: 0 0.125rem;
+    scroll-snap-align: start;
+    font-size: 0.72rem;
+    font-weight: 500;
+}
+
+.navItem.active {
+    background: var(--color-accent);
+    color: var(--color-primary-dark);
+}
+
+.modal {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--foreground) 20%, transparent);
+}
+
+.textInput,
+.numberInput,
+.dateInput,
+.timeInput,
+.selectInput,
+.statusSelect,
+.noteInput,
+.textArea,
+.categorySelect {
+    min-height: 44px;
+}
+
+.textInput,
+.numberInput,
+.dateInput,
+.timeInput,
+.selectInput,
+.noteInput,
+.textArea,
+.categorySelect {
+    text-align: right;
+}
+
+input[type="email"],
+input[type="url"],
+input[type="tel"],
+input[type="number"] {
+    direction: ltr;
+    text-align: left;
+}
+
+.homeBtn:focus-visible,
+.logoutBtn:focus-visible,
+.approveBtn:focus-visible,
+.denyBtn:focus-visible,
+.editBtn:focus-visible,
+.deleteBtn:focus-visible,
+.notesBtn:focus-visible,
+.navItem:focus-visible,
+.filterBtn:focus-visible,
+.categoryTab:focus-visible,
+.statusSelect:focus-visible,
+.textInput:focus-visible,
+.numberInput:focus-visible,
+.dateInput:focus-visible,
+.timeInput:focus-visible,
+.selectInput:focus-visible,
+.noteInput:focus-visible,
+.textArea:focus-visible,
+.categorySelect:focus-visible,
+.saveBtn:focus-visible,
+.cancelBtn:focus-visible,
+.addHolidayBtn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+    .content {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 1.25rem 1.25rem 6.75rem;
+    }
+
+    .stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .bookingCard,
+    .serviceCard,
+    .clientCard,
+    .pendingCard {
+        padding: 1rem 1.125rem;
+    }
+
+    .bottomNav {
+        max-width: 980px;
+        left: 50%;
+        right: auto;
+        width: calc(100% - 1.5rem);
+        transform: translateX(-50%);
+        border: 1px solid var(--border-color);
+        border-bottom: none;
+        border-top-left-radius: var(--radius-xl);
+        border-top-right-radius: var(--radius-xl);
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+@media (min-width: 1100px) {
+    .content {
+        max-width: 1200px;
+    }
+
+    .bottomNav {
+        max-width: 1200px;
+    }
+
+    .navItem {
+        min-width: 96px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
