@@ -23,7 +23,7 @@ r
 - **Review requests** - After completion, clients get SMS to rate their visit
 - **Unsubscribe options** - Clients can opt-out of non-essential SMS
 
-### 👩‍💼 Admin Panel
+### 👩‍💼 Admin Panel 2.0
 - **Dashboard** - Today's bookings, pending approvals, weekly stats
 - **Booking management** - Approve, cancel, mark complete
 - **Service management** - Add/edit services, pricing, duration
