@@ -1633,10 +1633,10 @@
     text-align: right;
 }
 
-input[type="email"],
-input[type="url"],
-input[type="tel"],
-input[type="number"] {
+.page input[type="email"],
+.page input[type="url"],
+.page input[type="tel"],
+.page input[type="number"] {
     direction: ltr;
     text-align: left;
 }
@@ -1715,9 +1715,9 @@ input[type="number"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    .page *,
+    .page *::before,
+    .page *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
