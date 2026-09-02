@@ -68,8 +68,8 @@
 .installBtn {
     width: 100%;
     padding: 0.875rem 1.5rem;
-    background: var(--color-primary);
-    color: white;
+    background: var(--ink);
+    color: var(--ink-inverse);
     border: none;
     border-radius: var(--radius-md);
     font-size: 1rem;
@@ -79,7 +79,7 @@
 }
 
 .installBtn:hover {
-    background: var(--color-primary-dark);
+    background: var(--rose-deep);
 }
 
 .laterBtn {

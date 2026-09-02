@@ -23,26 +23,25 @@ interface ArtistStepProps {
 export default function ArtistStep({ bookingData, updateBookingData, onNext }: ArtistStepProps) {
     const [artists, setArtists] = useState<ArtistData[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         async function fetchArtists() {
             try {
                 const res = await fetch("/api/artists");
-                if (res.ok) {
-                    const data = await res.json();
-                    setArtists(data);
+                if (!res.ok) throw new Error("artists");
+                const data = await res.json();
+                setArtists(data);
 
-                    // If only one artist, auto-select and skip
-                    if (data.length === 1) {
-                        updateBookingData({
-                            artistId: data[0].id,
-                            artistName: data[0].name,
-                        });
-                        onNext();
-                    }
+                // A single artist needs no choice — move straight on
+                if (data.length === 1) {
+                    updateBookingData({ artistId: data[0].id, artistName: data[0].name });
+                    onNext();
+                    return;
                 }
-            } catch (error) {
-                console.error("Error fetching artists:", error);
+            } catch (err) {
+                console.error("Error fetching artists:", err);
+                setError("לא הצלחנו לטעון את רשימת האמניות. נסי לרענן.");
             }
             setLoading(false);
         }
@@ -51,46 +50,54 @@ export default function ArtistStep({ bookingData, updateBookingData, onNext }: A
     }, []);
 
     function handleSelect(artist: ArtistData) {
-        updateBookingData({
-            artistId: artist.id,
-            artistName: artist.name,
-        });
-        // Auto-advance after a short delay for UX
-        setTimeout(() => onNext(), 200);
+        updateBookingData({ artistId: artist.id, artistName: artist.name });
+        setTimeout(() => onNext(), 180);
     }
 
     if (loading) {
         return (
-            <div className={styles.container}>
-                <p className={styles.title}>טוען...</p>
+            <div className={styles.container} aria-busy="true">
+                <p className={styles.subtitle}>טוענת...</p>
             </div>
         );
     }
 
     return (
         <div className={styles.container}>
-            <h2 className={styles.title}>בחרי אמנית</h2>
-            <p className={styles.subtitle}>בחרי את האמנית הרצויה לטיפול</p>
+            <div className={styles.header}>
+                <h2 className={`display ${styles.title}`}>אצל מי תרצי להתפנק?</h2>
+                <p className={styles.subtitle}>בחרי את האמנית לטיפול</p>
+            </div>
 
-            <div className={styles.artistList}>
-                {artists.map((artist) => (
-                    <div
-                        key={artist.id}
-                        className={`${styles.artistCard} ${bookingData.artistId === artist.id ? styles.selected : ""}`}
-                        onClick={() => handleSelect(artist)}
-                    >
-                        <div className={styles.artistAvatar}>💅</div>
-                        <div className={styles.artistInfo}>
-                            <div className={styles.artistName}>{artist.name}</div>
-                            <div className={styles.artistServices}>
-                                {artist.serviceIds.length} שירותים זמינים
-                            </div>
-                        </div>
-                        <div className={styles.checkmark}>
-                            {bookingData.artistId === artist.id && <CheckIcon size={14} />}
-                        </div>
-                    </div>
-                ))}
+            {error && <p className="field-error" role="alert">{error}</p>}
+
+            <div className={styles.list} role="radiogroup" aria-label="אמניות">
+                {artists.map((artist) => {
+                    const selected = bookingData.artistId === artist.id;
+                    return (
+                        <button
+                            key={artist.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            className={`${styles.card} ${selected ? styles.selected : ""}`}
+                            onClick={() => handleSelect(artist)}
+                        >
+                            <span className={`display ${styles.avatar}`} aria-hidden="true">
+                                {artist.name.trim().charAt(0)}
+                            </span>
+                            <span className={styles.info}>
+                                <span className={styles.name}>{artist.name}</span>
+                                <span className={styles.services}>
+                                    <span className="tabular">{artist.serviceIds.length}</span> טיפולים זמינים
+                                </span>
+                            </span>
+                            <span className={styles.check} aria-hidden="true">
+                                <CheckIcon size={14} />
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );

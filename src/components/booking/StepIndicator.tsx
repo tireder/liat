@@ -7,46 +7,30 @@ interface StepIndicatorProps {
     currentStep: number;
 }
 
+/**
+ * Compact progress header: "שלב 3 מתוך 6 · תאריך ושעה" with a segmented bar.
+ * Keeps every step name available to assistive tech without crowding small screens.
+ */
 export default function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
+    const total = steps.length;
+    const current = Math.min(Math.max(currentStep, 0), total - 1);
+
     return (
-        <div className={styles.container}>
-            <div className={styles.steps}>
+        <div className={styles.container} role="group" aria-label={`התקדמות: שלב ${current + 1} מתוך ${total}`}>
+            <div className={styles.row}>
+                <span className={styles.counter}>
+                    <span className="tabular">שלב {current + 1} מתוך {total}</span>
+                </span>
+                <span className={styles.label} aria-live="polite">{steps[current]}</span>
+            </div>
+            <ol className={styles.segments} aria-hidden="true">
                 {steps.map((step, index) => (
-                    <div
+                    <li
                         key={step}
-                        className={`${styles.step} ${index < currentStep
-                                ? styles.completed
-                                : index === currentStep
-                                    ? styles.active
-                                    : styles.upcoming
-                            }`}
-                    >
-                        <div className={styles.dot}>
-                            {index < currentStep ? (
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                                    <path
-                                        d="M20 6L9 17L4 12"
-                                        stroke="currentColor"
-                                        strokeWidth="3"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                            ) : (
-                                <span>{index + 1}</span>
-                            )}
-                        </div>
-                        <span className={styles.label}>{step}</span>
-                    </div>
+                        className={`${styles.segment} ${index < current ? styles.done : ""} ${index === current ? styles.active : ""}`}
+                    />
                 ))}
-            </div>
-            {/* Progress bar */}
-            <div className={styles.progressBar}>
-                <div
-                    className={styles.progressFill}
-                    style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-                />
-            </div>
+            </ol>
         </div>
     );
 }

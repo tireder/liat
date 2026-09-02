@@ -14,13 +14,20 @@ interface DateTimeStepProps {
     artistId?: string | null;
 }
 
+interface OperatingHour {
+    dayOfWeek: number;
+    openTime: string | null;
+    closeTime: string | null;
+    active: boolean;
+}
+
 const HEBREW_DAYS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
+const HEBREW_DAYS_FULL = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 const HEBREW_MONTHS = [
     "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
     "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"
 ];
 
-// Format date as YYYY-MM-DD in local timezone
 function formatLocalDate(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -28,58 +35,13 @@ function formatLocalDate(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
-// Generate time slots based on operating hours
-const generateTimeSlots = (
-    date: string,
-    duration: number,
-    bookedSlots: string[],
-    bufferMinutes: number
-): string[] => {
-    const slots: string[] = [];
-    const selectedDate = new Date(date + "T00:00:00");
-    const dayOfWeek = selectedDate.getDay();
-
-    // Operating hours (simplified)
-    let startHour = 9;
-    let endHour = dayOfWeek === 5 ? 14 : 20; // Friday ends at 14:00
-
-    if (dayOfWeek === 6) return []; // Saturday closed
-
-    const now = new Date();
-    const isToday = formatLocalDate(now) === date;
-
-    for (let hour = startHour; hour < endHour; hour++) {
-        for (let min = 0; min < 60; min += 30) {
-            const slotTime = `${hour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
-
-            // Skip if this is today and the slot is in the past or within buffer
-            if (isToday) {
-                const slotDateTime = new Date(selectedDate);
-                slotDateTime.setHours(hour, min, 0, 0);
-                const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
-                if (slotDateTime <= bufferTime) {
-                    continue;
-                }
-            }
-
-            // Check if slot fits before closing
-            const endMin = min + duration;
-            const endHourCalc = hour + Math.floor(endMin / 60);
-            if (endHourCalc > endHour || (endHourCalc === endHour && endMin % 60 > 0)) {
-                continue;
-            }
-
-            // Check if slot is already booked
-            if (bookedSlots.includes(slotTime)) {
-                continue;
-            }
-
-            slots.push(slotTime);
-        }
-    }
-
-    return slots;
-};
+type SlotState =
+    | { kind: "idle" }
+    | { kind: "loading" }
+    | { kind: "ready"; slots: string[] }
+    | { kind: "closed" }
+    | { kind: "blocked" }
+    | { kind: "error" };
 
 export default function DateTimeStep({
     bookingData,
@@ -93,214 +55,262 @@ export default function DateTimeStep({
         const now = new Date();
         return new Date(now.getFullYear(), now.getMonth(), 1);
     });
-    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
-    const [loadingSlots, setLoadingSlots] = useState(false);
+    const [operatingHours, setOperatingHours] = useState<OperatingHour[] | null>(null);
     const [bufferMinutes, setBufferMinutes] = useState(15);
+    const [slotState, setSlotState] = useState<SlotState>({ kind: "idle" });
 
-    // Fetch buffer minutes setting on mount
+    // Operating hours + buffer come from the salon's settings, not hard-coded values
     useEffect(() => {
         async function fetchSettings() {
             try {
                 const res = await fetch("/api/settings");
                 if (res.ok) {
                     const data = await res.json();
-                    const buffer = data.find((s: { key: string }) => s.key === "buffer_minutes");
-                    if (buffer) {
-                        setBufferMinutes(parseInt(buffer.value) || 15);
-                    }
+                    if (Array.isArray(data.operatingHours)) setOperatingHours(data.operatingHours);
+                    if (typeof data.bufferMinutes === "number") setBufferMinutes(data.bufferMinutes);
                 }
             } catch {
-                // Use default
+                // Keep defaults; the availability API still enforces the real hours
             }
         }
         fetchSettings();
     }, []);
 
-    // Fetch booked slots when date changes
+    // Availability is computed server-side (operating hours, blocked slots, existing bookings)
     useEffect(() => {
-        async function fetchBookedSlots() {
-            if (!bookingData.date) return;
-
-            setLoadingSlots(true);
-            try {
-                const url = artistId
-                    ? `/api/bookings?date=${bookingData.date}&artistId=${artistId}`
-                    : `/api/bookings?date=${bookingData.date}`;
-                const res = await fetch(url);
-                if (res.ok) {
-                    const bookings = await res.json();
-                    // Get booked start times (confirmed or pending)
-                    const taken = bookings
-                        .filter((b: { status: string }) => b.status === "confirmed" || b.status === "pending")
-                        .map((b: { start_time: string }) => b.start_time.slice(0, 5));
-                    setBookedSlots(taken);
-                }
-            } catch (error) {
-                console.error("Error fetching booked slots:", error);
-                setBookedSlots([]);
-            }
-            setLoadingSlots(false);
+        const date = bookingData.date;
+        if (!date) {
+            setSlotState({ kind: "idle" });
+            return;
         }
-        fetchBookedSlots();
-    }, [bookingData.date, artistId]);
+        let cancelled = false;
+        setSlotState({ kind: "loading" });
 
-    // Generate calendar days
+        async function fetchSlots() {
+            try {
+                const params = new URLSearchParams({ date: date as string });
+                if (bookingData.serviceId) params.set("serviceId", bookingData.serviceId);
+                if (artistId) params.set("artistId", artistId);
+                const res = await fetch(`/api/bookings/available?${params.toString()}`);
+                if (!res.ok) throw new Error("availability");
+                const data = await res.json();
+                if (cancelled) return;
+
+                if (data.closed) return setSlotState({ kind: "closed" });
+                if (data.blocked) return setSlotState({ kind: "blocked" });
+
+                // Drop slots that have already passed today (plus the booking buffer)
+                const now = new Date();
+                const isToday = formatLocalDate(now) === date;
+                const cutoff = now.getTime() + bufferMinutes * 60 * 1000;
+                const slots: string[] = (data.slots || []).filter((time: string) => {
+                    if (!isToday) return true;
+                    const [h, m] = time.split(":").map(Number);
+                    const slot = new Date(now);
+                    slot.setHours(h, m, 0, 0);
+                    return slot.getTime() > cutoff;
+                });
+                setSlotState({ kind: "ready", slots });
+            } catch (error) {
+                console.error("Error fetching available slots:", error);
+                if (!cancelled) setSlotState({ kind: "error" });
+            }
+        }
+        fetchSlots();
+        return () => { cancelled = true; };
+    }, [bookingData.date, bookingData.serviceId, artistId, bufferMinutes]);
+
+    const isDayClosed = (date: Date) => {
+        if (!operatingHours) return false;
+        const h = operatingHours.find((o) => o.dayOfWeek === date.getDay());
+        return !!h && (!h.active || !h.openTime || !h.closeTime);
+    };
+
     const calendarDays = useMemo(() => {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
-        const startPadding = firstDay.getDay(); // Sunday = 0
+        const startPadding = firstDay.getDay();
 
-        const days: { date: Date | null; isToday: boolean; isPast: boolean; isDisabled: boolean }[] = [];
-
-        // Padding for start
+        const days: { date: Date | null; isToday: boolean; isDisabled: boolean; closed: boolean }[] = [];
         for (let i = 0; i < startPadding; i++) {
-            days.push({ date: null, isToday: false, isPast: false, isDisabled: true });
+            days.push({ date: null, isToday: false, isDisabled: true, closed: false });
         }
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Actual days
         for (let d = 1; d <= lastDay.getDate(); d++) {
             const date = new Date(year, month, d);
             const isPast = date < today;
-            const isSaturday = date.getDay() === 6;
+            const closed = isDayClosed(date);
             days.push({
                 date,
                 isToday: date.getTime() === today.getTime(),
-                isPast,
-                isDisabled: isPast || isSaturday,
+                isDisabled: isPast || closed,
+                closed,
             });
         }
-
         return days;
-    }, [currentMonth]);
-
-    const timeSlots = useMemo(() => {
-        if (!bookingData.date) return [];
-        return generateTimeSlots(bookingData.date, bookingData.serviceDuration, bookedSlots, bufferMinutes);
-    }, [bookingData.date, bookingData.serviceDuration, bookedSlots, bufferMinutes]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentMonth, operatingHours]);
 
     const handleDateSelect = (date: Date) => {
-        // Use local date formatting to avoid timezone issues
-        updateBookingData({
-            date: formatLocalDate(date),
-            time: null, // Reset time when date changes
-        });
+        updateBookingData({ date: formatLocalDate(date), time: null });
     };
 
-    const handleTimeSelect = (time: string) => {
-        updateBookingData({ time });
-    };
+    const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
 
-    const prevMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-    };
-
-    const nextMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-    };
-
-    const canContinue = bookingData.date && bookingData.time;
+    const canContinue = !!(bookingData.date && bookingData.time);
     const canGoPrev = currentMonth > new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-    const formatSelectedDate = () => {
+    const selectedLabel = useMemo(() => {
         if (!bookingData.date) return "";
-        const [year, month, day] = bookingData.date.split("-").map(Number);
-        return `${day} ${HEBREW_MONTHS[month - 1]}`;
-    };
+        const [y, m, d] = bookingData.date.split("-").map(Number);
+        const date = new Date(y, m - 1, d);
+        return `יום ${HEBREW_DAYS_FULL[date.getDay()]}, ${d} ב${HEBREW_MONTHS[m - 1]}`;
+    }, [bookingData.date]);
+
+    // Group slots into parts of the day for quick scanning
+    const groups = useMemo(() => {
+        if (slotState.kind !== "ready") return [];
+        const byPart: Record<string, string[]> = { בוקר: [], צהריים: [], ערב: [] };
+        slotState.slots.forEach((t) => {
+            const hour = Number(t.split(":")[0]);
+            if (hour < 12) byPart["בוקר"].push(t);
+            else if (hour < 16) byPart["צהריים"].push(t);
+            else byPart["ערב"].push(t);
+        });
+        return Object.entries(byPart).filter(([, slots]) => slots.length > 0);
+    }, [slotState]);
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h2 className={styles.title}>{rescheduleMode ? "בחרי מועד חדש" : "בחרי תאריך ושעה"}</h2>
-                <p className={styles.subtitle}>{bookingData.serviceName} • {bookingData.serviceDuration} דקות</p>
+                <h2 className={`display ${styles.title}`}>{rescheduleMode ? "בחרי מועד חדש" : "מתי נוח לך?"}</h2>
+                <p className={styles.subtitle}>
+                    {bookingData.serviceName}
+                    {bookingData.serviceDuration ? <> · <span className="tabular">{bookingData.serviceDuration} דקות</span></> : null}
+                </p>
             </div>
 
             {/* Calendar */}
             <div className={styles.calendar}>
                 <div className={styles.calendarHeader}>
                     <button
+                        type="button"
                         className={styles.monthBtn}
                         onClick={prevMonth}
                         disabled={!canGoPrev}
                         aria-label="חודש קודם"
                     >
-                        <ChevronDownIcon size={20} style={{ transform: "rotate(90deg)" }} />
+                        <ChevronDownIcon size={18} style={{ transform: "rotate(-90deg)" }} />
                     </button>
-                    <span className={styles.monthLabel}>
-                        {HEBREW_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                    <span className={`display ${styles.monthLabel}`} aria-live="polite">
+                        {HEBREW_MONTHS[currentMonth.getMonth()]} <span className="tabular">{currentMonth.getFullYear()}</span>
                     </span>
-                    <button
-                        className={styles.monthBtn}
-                        onClick={nextMonth}
-                        aria-label="חודש הבא"
-                    >
-                        <ChevronDownIcon size={20} style={{ transform: "rotate(-90deg)" }} />
+                    <button type="button" className={styles.monthBtn} onClick={nextMonth} aria-label="חודש הבא">
+                        <ChevronDownIcon size={18} style={{ transform: "rotate(90deg)" }} />
                     </button>
                 </div>
 
-                <div className={styles.weekDays}>
+                <div className={styles.weekDays} aria-hidden="true">
                     {HEBREW_DAYS.map((day) => (
                         <span key={day} className={styles.weekDay}>{day}</span>
                     ))}
                 </div>
 
-                <div className={styles.days}>
-                    {calendarDays.map((day, i) => (
-                        <button
-                            key={i}
-                            className={`${styles.day} ${day.date && bookingData.date === formatLocalDate(day.date)
-                                ? styles.selected
-                                : ""
-                                } ${day.isToday ? styles.today : ""} ${day.isDisabled ? styles.disabled : ""}`}
-                            onClick={() => day.date && !day.isDisabled && handleDateSelect(day.date)}
-                            disabled={day.isDisabled || !day.date}
-                        >
-                            {day.date?.getDate() || ""}
-                        </button>
-                    ))}
+                <div className={styles.days} role="grid" aria-label="בחירת תאריך">
+                    {calendarDays.map((day, i) => {
+                        const value = day.date ? formatLocalDate(day.date) : "";
+                        const selected = !!day.date && bookingData.date === value;
+                        return (
+                            <button
+                                key={i}
+                                type="button"
+                                className={`${styles.day} ${selected ? styles.selected : ""} ${day.isToday ? styles.today : ""} ${day.closed ? styles.closedDay : ""}`}
+                                onClick={() => day.date && !day.isDisabled && handleDateSelect(day.date)}
+                                disabled={day.isDisabled || !day.date}
+                                aria-pressed={selected}
+                                aria-label={day.date ? `${day.date.getDate()} ב${HEBREW_MONTHS[day.date.getMonth()]}${day.closed ? ", סגור" : ""}` : undefined}
+                                tabIndex={day.date ? 0 : -1}
+                            >
+                                <span className="tabular">{day.date?.getDate() || ""}</span>
+                            </button>
+                        );
+                    })}
                 </div>
+
+                {operatingHours && (
+                    <p className={styles.legend}>ימים מסומנים בקו הם ימים שהסלון סגור</p>
+                )}
             </div>
 
             {/* Time slots */}
             {bookingData.date && (
                 <div className={styles.timeSection}>
-                    <h3 className={styles.timeTitle}>
-                        שעות פנויות ב-{formatSelectedDate()}
-                    </h3>
-                    {loadingSlots ? (
-                        <p className={styles.noSlots}>טוען...</p>
-                    ) : timeSlots.length === 0 ? (
-                        <p className={styles.noSlots}>אין שעות פנויות ביום זה</p>
-                    ) : (
-                        <div className={styles.timeGrid}>
-                            {timeSlots.map((time) => (
-                                <button
-                                    key={time}
-                                    className={`${styles.timeSlot} ${bookingData.time === time ? styles.selected : ""
-                                        }`}
-                                    onClick={() => handleTimeSelect(time)}
-                                >
-                                    {time}
-                                </button>
-                            ))}
+                    <h3 className={styles.timeTitle}>שעות פנויות · {selectedLabel}</h3>
+
+                    {slotState.kind === "loading" && (
+                        <div className={styles.timeGrid} aria-busy="true">
+                            {Array.from({ length: 8 }).map((_, i) => <span key={i} className={styles.slotSkeleton} />)}
                         </div>
                     )}
+
+                    {slotState.kind === "closed" && (
+                        <p className={styles.notice}>הסלון סגור ביום זה. בחרי יום אחר.</p>
+                    )}
+                    {slotState.kind === "blocked" && (
+                        <p className={styles.notice}>היום הזה לא זמין להזמנות. בחרי יום אחר.</p>
+                    )}
+                    {slotState.kind === "error" && (
+                        <p className={styles.notice} role="alert">לא הצלחנו לטעון את השעות הפנויות. נסי שוב.</p>
+                    )}
+                    {slotState.kind === "ready" && slotState.slots.length === 0 && (
+                        <p className={styles.notice}>כל השעות ביום זה תפוסות. נסי יום אחר.</p>
+                    )}
+
+                    {slotState.kind === "ready" && groups.map(([part, slots]) => (
+                        <div key={part} className={styles.timeGroup}>
+                            <span className={styles.timeGroupLabel}>{part}</span>
+                            <div className={styles.timeGrid} role="radiogroup" aria-label={`שעות ${part}`}>
+                                {slots.map((time) => {
+                                    const selected = bookingData.time === time;
+                                    return (
+                                        <button
+                                            key={time}
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={selected}
+                                            className={`${styles.timeSlot} ${selected ? styles.selected : ""}`}
+                                            onClick={() => updateBookingData({ time })}
+                                        >
+                                            <span className="tabular" dir="ltr">{time}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {canContinue && (
+                <div className={styles.summary} aria-live="polite">
+                    <span className={styles.summaryLabel}>נבחר</span>
+                    <span className={styles.summaryValue}>
+                        {selectedLabel} · <span className="tabular" dir="ltr">{bookingData.time}</span>
+                    </span>
                 </div>
             )}
 
             <div className={styles.footer}>
-                <button className="btn btn-secondary" onClick={onBack}>
+                <button type="button" className="btn btn-secondary" onClick={onBack}>
                     חזרה
                 </button>
-                <button
-                    className="btn btn-primary"
-                    onClick={onNext}
-                    disabled={!canContinue}
-                >
+                <button type="button" className="btn btn-primary" onClick={onNext} disabled={!canContinue}>
                     המשך
                 </button>
             </div>

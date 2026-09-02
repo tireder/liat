@@ -1,159 +1,180 @@
-/* Enhanced Reviews CSS */
 .section {
-    padding: 5rem 1.5rem;
-    background: linear-gradient(135deg, #fffcfb 0%, #fdf2ed 100%);
+    background: var(--bg);
     overflow: hidden;
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.title {
-    text-align: center;
-    font-size: 2.5rem;
-    color: #1a1a2e;
-    margin-bottom: 1rem;
-    font-weight: 700;
-}
-
-.subtitle {
-    text-align: center;
-    color: #666;
-    margin-bottom: 2.5rem;
-    font-size: 1.1rem;
-}
-
-.loading {
-    text-align: center;
-    color: #888;
-    padding: 2rem;
+.inner {
+    display: grid;
+    gap: 2.5rem;
 }
 
 .summary {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    margin-bottom: 3rem;
-    background: white;
-    width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 1rem 2rem;
-    border-radius: full;
-    border-radius: 2rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    gap: 1rem;
 }
 
-.stars {
+.title {
+    font-size: clamp(2rem, 4.2vw, 3rem);
+}
+
+.score {
     display: flex;
-    gap: 0.25rem;
-    margin-bottom: 0.25rem;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
 }
 
-.star {
-    font-size: 1.75rem;
-    color: #ddd;
-    transition: color 0.3s ease;
+.scoreValue {
+    font-size: 3.5rem;
+    line-height: 1;
+    color: var(--ink);
 }
 
-.star.filled {
-    color: #ffb400;
-    filter: drop-shadow(0 2px 4px rgba(255, 180, 0, 0.2));
+.scoreMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
-.rating {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1a1a2e;
-    margin-top: 0.25rem;
+.scoreCount {
+    font-size: 0.875rem;
+    color: var(--ink-muted);
 }
 
-.count {
-    color: #888;
-    font-size: 0.9rem;
-    margin-top: 0.25rem;
+/* Cards — horizontal snap on mobile, grid on desktop */
+.list {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 0.25rem var(--container-padding) 1rem;
+    margin-inline: calc(-1 * var(--container-padding));
+    scrollbar-width: none;
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-}
-
-@media (max-width: 900px) {
-    .grid {
-        display: flex;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        padding-bottom: 1.5rem;
-        -webkit-overflow-scrolling: touch;
-        gap: 1rem;
-    }
+.list::-webkit-scrollbar {
+    display: none;
 }
 
 .card {
-    background: white;
-    border-radius: 1.5rem;
-    padding: 1.75rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 1px solid rgba(0, 0, 0, 0.03);
-    min-width: 280px;
-    scroll-snap-align: center;
+    position: relative;
+    flex: 0 0 min(82vw, 340px);
+    scroll-snap-align: start;
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.75rem 1.5rem 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
 }
 
-.cardHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-}
-
-.name {
-    font-weight: 700;
-    color: #1a1a2e;
-    font-size: 1.1rem;
+.quoteMark {
+    position: absolute;
+    top: 0.5rem;
+    inset-inline-end: 1.25rem;
+    font-size: 4.5rem;
+    line-height: 1;
+    color: var(--rose-soft);
+    pointer-events: none;
 }
 
 .cardStars {
-    display: flex;
-    gap: 0.125rem;
-}
-
-.starFilled {
-    color: #ffb400;
-    font-size: 0.9rem;
-}
-
-.starEmpty {
-    color: #eee;
-    font-size: 0.9rem;
+    position: relative;
 }
 
 .comment {
-    color: #4a4a4a;
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
-    flex-grow: 1;
-    font-style: italic;
-    background: #fafafa;
-    padding: 1rem;
-    border-radius: 1rem;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: var(--ink);
+    quotes: none;
+    flex: 1;
+}
+
+.commentMuted {
+    color: var(--ink-muted);
+}
+
+.author {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--line);
+}
+
+.name {
+    font-weight: 600;
+    font-size: 0.95rem;
 }
 
 .date {
-    font-size: 0.8rem;
-    color: #aaa;
-    text-align: left;
-    margin-top: auto;
+    font-size: 0.8125rem;
+    color: var(--ink-soft);
+}
+
+@media (min-width: 768px) {
+    .list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: visible;
+        padding: 0;
+        margin-inline: 0;
+    }
+
+    .card {
+        flex: initial;
+    }
+}
+
+@media (min-width: 1024px) {
+    .inner {
+        grid-template-columns: 300px 1fr;
+        gap: 4rem;
+        align-items: start;
+    }
+
+    .summary {
+        position: sticky;
+        top: calc(var(--header-h) + 2rem);
+    }
+
+    .list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.25rem;
+    }
+
+    .card:nth-child(even) {
+        transform: translateY(1.5rem);
+    }
+
+    .card:nth-child(even):hover {
+        transform: translateY(calc(1.5rem - 3px));
+    }
+}
+
+@media (min-width: 1280px) {
+    .list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card:nth-child(even) {
+        transform: none;
+    }
+
+    .card:nth-child(3n + 2) {
+        transform: translateY(1.5rem);
+    }
+
+    .card:nth-child(3n + 2):hover {
+        transform: translateY(calc(1.5rem - 3px));
+    }
 }

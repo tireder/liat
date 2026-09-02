@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { BookingData } from "@/app/book/page";
-import { NailPolishIcon, SparklesIcon, DiamondIcon, PaletteIcon, FootIcon, WrenchIcon, ClockIcon, CheckIcon } from "@/components/icons";
+import { ClockIcon, CheckIcon } from "@/components/icons";
+import { formatPrice } from "@/lib/landing";
 import styles from "./ServiceStep.module.css";
 
 interface ServiceStepProps {
@@ -10,6 +11,7 @@ interface ServiceStepProps {
     updateBookingData: (data: Partial<BookingData>) => void;
     onNext: () => void;
     artistId?: string | null;
+    preselectServiceId?: string | null;
 }
 
 interface Service {
@@ -20,73 +22,60 @@ interface Service {
     price: number;
 }
 
-// Map service names to icons
-const iconMap: Record<string, React.FC<{ size?: number; color?: string }>> = {
-    "מניקור קלאסי": NailPolishIcon,
-    "מניקור ג׳ל": SparklesIcon,
-    "בניית ציפורניים": DiamondIcon,
-    "עיצוב נייל ארט": PaletteIcon,
-    "פדיקור ספא": FootIcon,
-    "תיקון ציפורן": WrenchIcon,
-};
-
 export default function ServiceStep({
     bookingData,
     updateBookingData,
     onNext,
     artistId,
+    preselectServiceId,
 }: ServiceStepProps) {
     const [services, setServices] = useState<Service[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
     const [recentServiceId, setRecentServiceId] = useState<string | null>(null);
     const [artistServiceIds, setArtistServiceIds] = useState<string[] | null>(null);
 
+    // Surface the client's most recent treatment first
     useEffect(() => {
-        if (bookingData.phone) {
-            async function fetchHistory() {
-                try {
-                    const res = await fetch(`/api/bookings/my?phone=${encodeURIComponent(bookingData.phone)}`);
-                    if (res.ok) {
-                        const bookings = await res.json();
-                        // Find last confirmed booking service
-                        const lastBooking = bookings
-                            .filter((b: any) => b.status === "confirmed" && b.service)
-                            .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-
-                        if (lastBooking?.service?.id) {
-                            setRecentServiceId(lastBooking.service.id);
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error fetching history:", e);
+        if (!bookingData.phone) return;
+        async function fetchHistory() {
+            try {
+                const res = await fetch(`/api/bookings/my?phone=${encodeURIComponent(bookingData.phone)}`);
+                if (res.ok) {
+                    const bookings = await res.json();
+                    const lastBooking = (Array.isArray(bookings) ? bookings : [])
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        .filter((b: any) => b.status === "confirmed" && b.service)
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+                    if (lastBooking?.service?.id) setRecentServiceId(lastBooking.service.id);
                 }
+            } catch (e) {
+                console.error("Error fetching history:", e);
             }
-            fetchHistory();
         }
+        fetchHistory();
     }, [bookingData.phone]);
 
     useEffect(() => {
         async function fetchServices() {
+            setError("");
             try {
-                // Fetch artist service assignments if artistId provided
                 if (artistId) {
                     const artistRes = await fetch("/api/artists");
                     if (artistRes.ok) {
                         const artists = await artistRes.json();
                         const artist = artists.find((a: { id: string }) => a.id === artistId);
-                        if (artist) {
-                            setArtistServiceIds(artist.serviceIds || []);
-                        }
+                        if (artist) setArtistServiceIds(artist.serviceIds || []);
                     }
                 }
 
                 const res = await fetch("/api/services");
-                if (res.ok) {
-                    const data = await res.json();
-                    setServices(data);
-                }
-            } catch (error) {
-                console.error("Error fetching services:", error);
+                if (!res.ok) throw new Error("services");
+                setServices(await res.json());
+            } catch (err) {
+                console.error("Error fetching services:", err);
+                setError("לא הצלחנו לטעון את רשימת הטיפולים. נסי לרענן את העמוד.");
             }
             setLoading(false);
         }
@@ -102,13 +91,29 @@ export default function ServiceStep({
         });
     };
 
-    const getIcon = (name: string) => iconMap[name] || NailPolishIcon;
+    const visible = services.filter((s) => !artistServiceIds || artistServiceIds.includes(s.id));
+
+    // Pre-select the service passed from a landing-page card (once)
+    useEffect(() => {
+        if (loading || !preselectServiceId || bookingData.serviceId) return;
+        const match = visible.find((s) => s.id === preselectServiceId);
+        if (match) handleSelect(match);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading, preselectServiceId, artistServiceIds, services.length]);
+
     const canContinue = bookingData.serviceId !== null;
+    const ordered = [...visible].sort((a, b) => (a.id === recentServiceId ? -1 : b.id === recentServiceId ? 1 : 0));
 
     if (loading) {
         return (
-            <div className={styles.container}>
-                <div className={styles.loading}>טוען שירותים...</div>
+            <div className={styles.container} aria-busy="true">
+                <div className={styles.header}>
+                    <h2 className={`display ${styles.title}`}>בחרי טיפול</h2>
+                    <p className={styles.subtitle}>טוענת את רשימת הטיפולים...</p>
+                </div>
+                <div className={styles.list}>
+                    {[0, 1, 2].map((i) => <div key={i} className={styles.skeleton} />)}
+                </div>
             </div>
         );
     }
@@ -116,72 +121,61 @@ export default function ServiceStep({
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h2 className={styles.title}>בחרי שירות</h2>
-                <p className={styles.subtitle}>איזה טיפול את מעוניינת?</p>
+                <h2 className={`display ${styles.title}`}>בחרי טיפול</h2>
+                <p className={styles.subtitle}>איזה טיפול מתאים לך היום?</p>
             </div>
 
-            <div className={styles.list}>
-                {services
-                    .filter(s => !artistServiceIds || artistServiceIds.includes(s.id))
-                    .map((service) => {
-                        const Icon = getIcon(service.name);
-                        const isRecent = service.id === recentServiceId;
+            {error && <p className="field-error" role="alert">{error}</p>}
 
-                        // Move recent service to top
-                        const order = isRecent ? -1 : 0;
+            {!error && ordered.length === 0 && (
+                <p className={styles.empty}>אין כרגע טיפולים זמינים לבחירה.</p>
+            )}
 
-                        return (
-                            <button
-                                key={service.id}
-                                className={`${styles.card} ${bookingData.serviceId === service.id ? styles.selected : ""
-                                    }`}
-                                onClick={() => handleSelect(service)}
-                                style={{ order }}
-                            >
-                                <div className={styles.cardIcon}>
-                                    <Icon size={22} color="var(--color-primary-dark)" />
-                                </div>
-                                <div className={styles.cardContent}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                        <h3 className={styles.cardTitle}>{service.name}</h3>
-                                        {isRecent && (
-                                            <span style={{
-                                                fontSize: "0.7rem",
-                                                background: "var(--color-accent)",
-                                                color: "var(--color-primary-dark)",
-                                                padding: "2px 6px",
-                                                borderRadius: "4px",
-                                                fontWeight: "bold"
-                                            }}>
-                                                הזמיני שוב
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className={styles.cardDescription}>{service.description}</p>
-                                    <div className={styles.cardMeta}>
-                                        <span className={styles.duration}>
-                                            <ClockIcon size={12} />
-                                            {service.duration} דק׳
-                                        </span>
-                                        <span className={styles.price}>₪{service.price}</span>
-                                    </div>
-                                </div>
-                                <div className={styles.checkmark}>
-                                    <CheckIcon size={18} />
-                                </div>
-                            </button>
-                        );
-                    })}
+            <div className={styles.list} role="radiogroup" aria-label="טיפולים">
+                {ordered.map((service) => {
+                    const selected = bookingData.serviceId === service.id;
+                    const isRecent = service.id === recentServiceId;
+                    return (
+                        <button
+                            key={service.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            className={`${styles.card} ${selected ? styles.selected : ""}`}
+                            onClick={() => handleSelect(service)}
+                        >
+                            <span className={styles.check} aria-hidden="true">
+                                <CheckIcon size={14} />
+                            </span>
+                            <span className={styles.cardContent}>
+                                <span className={styles.cardTitleRow}>
+                                    <span className={`display ${styles.cardTitle}`}>{service.name}</span>
+                                    {isRecent && <span className={styles.recent}>הטיפול האחרון שלך</span>}
+                                </span>
+                                {service.description && (
+                                    <span className={styles.cardDescription}>{service.description}</span>
+                                )}
+                                <span className={styles.cardMeta}>
+                                    <span className={styles.duration}>
+                                        <ClockIcon size={13} />
+                                        <span className="tabular">{service.duration} דק׳</span>
+                                    </span>
+                                    <span className={`display tabular ${styles.price}`}>{formatPrice(service.price)}</span>
+                                </span>
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
 
             <div className={styles.footer}>
                 <button
-                    className="btn btn-primary"
+                    type="button"
+                    className="btn btn-primary btn-block btn-lg"
                     onClick={onNext}
                     disabled={!canContinue}
-                    style={{ width: "100%" }}
                 >
-                    המשך לבחירת תאריך
+                    {canContinue ? "המשך לבחירת תאריך" : "בחרי טיפול כדי להמשיך"}
                 </button>
             </div>
         </div>

@@ -1,0 +1,45 @@
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.placeholder {
+    height: 56px;
+    margin-top: 0.5rem;
+}
+
+.badge {
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.badge:hover {
+    transform: translateY(-2px);
+}
+
+.badge:active {
+    transform: scale(0.98);
+}
+
+/* The badge artwork sits in the middle of a square canvas; crop the transparent padding */
+.badge {
+    overflow: hidden;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.badgeImg {
+    height: 168px;
+    width: auto;
+    object-fit: contain;
+    margin-inline: -28px;
+}

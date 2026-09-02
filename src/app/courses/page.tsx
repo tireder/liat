@@ -2,20 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, BookIcon, CalendarIcon, ClockIcon, UsersIcon, CheckIcon, CertificateIcon, GiftIcon, PhoneIcon, UserIcon } from "@/components/icons";
+import PageHeader from "@/components/ui/PageHeader";
+import { ArrowLeftIcon, CalendarIcon, ClockIcon, UsersIcon, CheckIcon, CertificateIcon, GiftIcon, MapPinIcon, MessageIcon } from "@/components/icons";
+import type { CourseItem, CourseStatus } from "@/lib/landing";
+import { getCourseStatus, COURSE_STATUS_LABEL, formatCourseDate, formatPrice, toWhatsAppNumber } from "@/lib/landing";
 import styles from "./page.module.css";
-
-interface Course {
-    id: string;
-    name: string;
-    description: string | null;
-    date: string;
-    duration: string;
-    price: number;
-    capacity: number;
-    enrolled: number;
-    active: boolean;
-}
 
 // Course detail enhancements (static for now, could be moved to DB later)
 const courseExtras: Record<string, {
@@ -73,57 +64,64 @@ const courseExtras: Record<string, {
     },
 };
 
-const defaultExtras = {
-    longDescription: "",
-    highlights: [{ text: "קורס מקצועי", icon: "check" as const }],
-    syllabus: ["פרטים נוספים בקרוב"],
-};
-
 const iconMap = {
     certificate: CertificateIcon,
     gift: GiftIcon,
     check: CheckIcon,
 };
 
-function formatDate(dateStr: string): string {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("he-IL", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-    });
+interface Course extends CourseItem {
+    active?: boolean;
 }
 
 export default function CoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
+    const [whatsapp, setWhatsapp] = useState("");
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [showRegistration, setShowRegistration] = useState(false);
     const [registrationComplete, setRegistrationComplete] = useState(false);
     const [registering, setRegistering] = useState(false);
     const [formData, setFormData] = useState({ name: "", phone: "" });
+    const [agreed, setAgreed] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        async function fetchCourses() {
+        async function load() {
             try {
-                const res = await fetch("/api/courses");
-                if (res.ok) {
-                    const data = await res.json();
-                    setCourses(data);
+                const [coursesRes, settingsRes] = await Promise.all([fetch("/api/courses"), fetch("/api/settings")]);
+                if (!coursesRes.ok) throw new Error("courses");
+                const data = await coursesRes.json();
+                setCourses(Array.isArray(data) ? data : []);
+                if (settingsRes.ok) {
+                    const s = await settingsRes.json();
+                    setWhatsapp(toWhatsAppNumber(s.whatsapp || s.phone));
                 }
             } catch (err) {
                 console.error("Error fetching courses:", err);
+                setLoadError(true);
             }
             setLoading(false);
         }
-        fetchCourses();
+        load();
     }, []);
+
+    // Deep link from the landing page: /courses#course-<id>
+    useEffect(() => {
+        if (loading || typeof window === "undefined") return;
+        const hash = window.location.hash;
+        if (hash.startsWith("#course-")) {
+            const el = document.getElementById(hash.slice(1));
+            el?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [loading]);
 
     const handleRegister = (course: Course) => {
         setSelectedCourse(course);
         setShowRegistration(true);
         setError("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     const handleConfirmRegistration = async () => {
@@ -132,31 +130,26 @@ export default function CoursesPage() {
             setError("נא למלא שם וטלפון");
             return;
         }
+        if (!agreed) {
+            setError("יש לאשר את תנאי ההרשמה");
+            return;
+        }
 
         setRegistering(true);
         setError("");
-
         try {
             const res = await fetch(`/api/courses/${selectedCourse.id}/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: formData.name,
-                    phone: formData.phone,
-                }),
+                body: JSON.stringify({ name: formData.name, phone: formData.phone }),
             });
 
             if (res.ok) {
                 setRegistrationComplete(true);
-                // Update local course data
-                setCourses(prev => prev.map(c =>
-                    c.id === selectedCourse.id
-                        ? { ...c, enrolled: c.enrolled + 1 }
-                        : c
-                ));
+                setCourses(prev => prev.map(c => c.id === selectedCourse.id ? { ...c, enrolled: c.enrolled + 1 } : c));
             } else {
-                const data = await res.json();
-                setError(data.error || "שגיאה בהרשמה");
+                const data = await res.json().catch(() => null);
+                setError(data?.error || "שגיאה בהרשמה");
             }
         } catch (err) {
             console.error("Registration error:", err);
@@ -176,259 +169,285 @@ export default function CoursesPage() {
         }
     };
 
-    // Loading state
-    if (loading) {
-        return (
-            <div className={styles.page}>
-                <header className={styles.header}>
-                    <Link href="/" className={styles.backBtn}>
-                        <ArrowLeftIcon size={20} />
-                    </Link>
-                    <h1 className={styles.headerTitle}>קורסים</h1>
-                    <div style={{ width: 44 }} />
-                </header>
-                <div className={styles.content}>
-                    <div className={styles.loading}>טוען קורסים...</div>
-                </div>
-            </div>
-        );
-    }
-
-    // Registration Success View
+    // Registration success
     if (registrationComplete && selectedCourse) {
         return (
             <div className={styles.page}>
-                <header className={styles.header}>
-                    <div style={{ width: 44 }} />
-                    <h1 className={styles.headerTitle}>הרשמה לקורס</h1>
-                    <Link href="/" className={styles.closeBtn}>
-                        <ArrowLeftIcon size={20} />
-                    </Link>
-                </header>
-                <div className={styles.successContainer}>
-                    <div className={styles.successIcon}>
-                        <CheckIcon size={40} />
-                    </div>
-                    <h2 className={styles.successTitle}>נרשמת בהצלחה!</h2>
-                    <p className={styles.successText}>
-                        ניצור איתך קשר לאישור סופי ופרטי תשלום
-                    </p>
-                    <div className={styles.successCard}>
-                        <div className={styles.successRow}>
-                            <span>קורס</span>
-                            <span>{selectedCourse.name}</span>
-                        </div>
-                        <div className={styles.successRow}>
-                            <span>תאריך</span>
-                            <span>{formatDate(selectedCourse.date)}</span>
-                        </div>
-                        <div className={styles.successRow}>
-                            <span>מחיר</span>
-                            <span>₪{selectedCourse.price}</span>
+                <PageHeader title="הרשמה לקורס" />
+                <main id="main" className={`container ${styles.narrow}`}>
+                    <div className={styles.success}>
+                        <span className={styles.successIcon}><CheckIcon size={36} /></span>
+                        <h2 className={`display ${styles.successTitle}`}>נרשמת בהצלחה</h2>
+                        <p className={styles.successText}>ניצור איתך קשר לאישור סופי ולפרטי התשלום.</p>
+                        <dl className={styles.summary}>
+                            <div className={styles.summaryRow}><dt>קורס</dt><dd>{selectedCourse.name}</dd></div>
+                            <div className={styles.summaryRow}><dt>תאריך</dt><dd>{formatCourseDate(selectedCourse.date)}</dd></div>
+                            <div className={styles.summaryRow}><dt>מחיר</dt><dd className="tabular">{formatPrice(selectedCourse.price)}</dd></div>
+                        </dl>
+                        <div className={styles.successActions}>
+                            <button type="button" className="btn btn-secondary" onClick={handleBack}>לכל הקורסים</button>
+                            <Link href="/" className="btn btn-primary">חזרה לדף הבית</Link>
                         </div>
                     </div>
-                    <Link href="/" className="btn btn-primary" style={{ width: "100%", maxWidth: 320 }}>
-                        חזרה לדף הבית
-                    </Link>
-                </div>
-            </div>
-        );
-    }
-
-    // Registration Form View
-    if (showRegistration && selectedCourse) {
-        const extras = courseExtras[selectedCourse.name] || defaultExtras;
-        return (
-            <div className={styles.page}>
-                <header className={styles.header}>
-                    <button className={styles.backBtn} onClick={handleBack}>
-                        <ArrowLeftIcon size={20} />
-                    </button>
-                    <h1 className={styles.headerTitle}>הרשמה לקורס</h1>
-                    <div style={{ width: 44 }} />
-                </header>
-                <main className={styles.content}>
-                    <div className={styles.regHeader}>
-                        <h2 className={styles.regTitle}>{selectedCourse.name}</h2>
-                        <p className={styles.regSubtitle}>{formatDate(selectedCourse.date)} • {selectedCourse.duration}</p>
-                    </div>
-
-                    <div className={styles.regForm}>
-                        <div className={styles.formField}>
-                            <label>
-                                <UserIcon size={16} />
-                                שם מלא
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                placeholder="הכניסי את שמך"
-                                className={styles.textInput}
-                            />
-                        </div>
-                        <div className={styles.formField}>
-                            <label>
-                                <PhoneIcon size={16} />
-                                טלפון
-                            </label>
-                            <input
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                                placeholder="050-000-0000"
-                                className={styles.textInput}
-                                dir="ltr"
-                            />
-                        </div>
-                    </div>
-
-                    {error && <p className={styles.error}>{error}</p>}
-
-                    <div className={styles.regCard}>
-                        <div className={styles.regRow}>
-                            <CalendarIcon size={18} />
-                            <span>תאריך</span>
-                            <span className={styles.regValue}>{formatDate(selectedCourse.date)}</span>
-                        </div>
-                        <div className={styles.regRow}>
-                            <ClockIcon size={18} />
-                            <span>משך</span>
-                            <span className={styles.regValue}>{selectedCourse.duration}</span>
-                        </div>
-                        <div className={styles.regRow}>
-                            <UsersIcon size={18} />
-                            <span>משתתפות</span>
-                            <span className={styles.regValue}>{selectedCourse.enrolled + 1}/{selectedCourse.capacity}</span>
-                        </div>
-                        <div className={styles.regDivider} />
-                        <div className={styles.regPriceRow}>
-                            <span>מחיר</span>
-                            <span className={styles.regPrice}>₪{selectedCourse.price}</span>
-                        </div>
-                    </div>
-
-                    <div className={styles.regPolicy}>
-                        <h4>מדיניות ביטולים</h4>
-                        <p>ביטול עד 48 שעות לפני הקורס - החזר מלא.<br />ביטול בתוך 48 שעות - ללא החזר.</p>
-                    </div>
-
-                    <label className={styles.regCheckbox}>
-                        <input type="checkbox" defaultChecked />
-                        <span className={styles.regCheckmark}><CheckIcon size={14} /></span>
-                        <span>קראתי ומסכימה לתנאי ההרשמה</span>
-                    </label>
-
-                    <button
-                        className="btn btn-primary"
-                        onClick={handleConfirmRegistration}
-                        disabled={registering}
-                        style={{ width: "100%" }}
-                    >
-                        {registering ? "שולח..." : "אישור הרשמה"}
-                    </button>
                 </main>
             </div>
         );
     }
 
-    // Course List View
+    // Registration form
+    if (showRegistration && selectedCourse) {
+        const remaining = Math.max(0, selectedCourse.capacity - selectedCourse.enrolled);
+        return (
+            <div className={styles.page}>
+                <PageHeader title="הרשמה לקורס" backHref="/courses" backLabel="חזרה לקורסים" />
+                <main id="main" className={`container ${styles.narrow}`}>
+                    <form
+                        className={styles.form}
+                        onSubmit={(e) => { e.preventDefault(); handleConfirmRegistration(); }}
+                    >
+                        <div className={styles.formHead}>
+                            <span className="eyebrow">הרשמה</span>
+                            <h2 className={`display ${styles.formTitle}`}>{selectedCourse.name}</h2>
+                            <p className={styles.formSubtitle}>
+                                {formatCourseDate(selectedCourse.date)} · {selectedCourse.duration}
+                            </p>
+                        </div>
+
+                        <div className={styles.fields}>
+                            <div className="field">
+                                <label htmlFor="reg-name" className="field-label">שם מלא</label>
+                                <input
+                                    id="reg-name"
+                                    type="text"
+                                    autoComplete="name"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="השם שלך"
+                                    className="input"
+                                    required
+                                />
+                            </div>
+                            <div className="field">
+                                <label htmlFor="reg-phone" className="field-label">טלפון נייד</label>
+                                <input
+                                    id="reg-phone"
+                                    type="tel"
+                                    inputMode="tel"
+                                    autoComplete="tel"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                    placeholder="050-0000000"
+                                    className={`input ${styles.ltr}`}
+                                    dir="ltr"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {error && <p className="field-error" role="alert">{error}</p>}
+
+                        <dl className={styles.summary}>
+                            <div className={styles.summaryRow}>
+                                <dt><CalendarIcon size={16} /> תאריך</dt>
+                                <dd>{formatCourseDate(selectedCourse.date)}</dd>
+                            </div>
+                            <div className={styles.summaryRow}>
+                                <dt><ClockIcon size={16} /> משך</dt>
+                                <dd>{selectedCourse.duration}</dd>
+                            </div>
+                            {selectedCourse.location && (
+                                <div className={styles.summaryRow}>
+                                    <dt><MapPinIcon size={16} /> מיקום</dt>
+                                    <dd>{selectedCourse.location}</dd>
+                                </div>
+                            )}
+                            {selectedCourse.capacity > 0 && (
+                                <div className={styles.summaryRow}>
+                                    <dt><UsersIcon size={16} /> מקומות</dt>
+                                    <dd className="tabular">נותרו {remaining} מתוך {selectedCourse.capacity}</dd>
+                                </div>
+                            )}
+                            <div className={`${styles.summaryRow} ${styles.summaryTotal}`}>
+                                <dt>עלות הקורס</dt>
+                                <dd className={`display tabular ${styles.summaryPrice}`}>{formatPrice(selectedCourse.price)}</dd>
+                            </div>
+                        </dl>
+
+                        <div className={styles.policy}>
+                            <h4>מדיניות ביטולים</h4>
+                            <p>ביטול עד 48 שעות לפני הקורס - החזר מלא.<br />ביטול בתוך 48 שעות - ללא החזר.</p>
+                        </div>
+
+                        <label className={styles.checkbox}>
+                            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className={styles.checkboxInput} />
+                            <span className={styles.checkmark} aria-hidden="true"><CheckIcon size={13} /></span>
+                            <span>קראתי ומסכימה לתנאי ההרשמה</span>
+                        </label>
+
+                        <div className={styles.formActions}>
+                            <button type="button" className="btn btn-secondary" onClick={handleBack} disabled={registering}>
+                                חזרה
+                            </button>
+                            <button type="submit" className="btn btn-primary btn-lg" disabled={registering} aria-busy={registering}>
+                                {registering ? "שולחת..." : "אישור הרשמה"}
+                            </button>
+                        </div>
+                    </form>
+                </main>
+            </div>
+        );
+    }
+
+    // Course list
+    const withStatus = courses.map((course) => ({ course, status: getCourseStatus(course) as CourseStatus }));
+    const upcoming = withStatus.filter((c) => c.status !== "past").sort((a, b) => a.course.date.localeCompare(b.course.date));
+    const past = withStatus.filter((c) => c.status === "past").sort((a, b) => b.course.date.localeCompare(a.course.date));
+
     return (
         <div className={styles.page}>
-            <header className={styles.header}>
-                <Link href="/" className={styles.backBtn}>
-                    <ArrowLeftIcon size={20} />
-                </Link>
-                <h1 className={styles.headerTitle}>קורסים</h1>
-                <div style={{ width: 44 }} />
-            </header>
+            <PageHeader title="קורסים" />
 
-            <main className={styles.content}>
+            <main id="main" className={`container ${styles.content}`}>
                 <div className={styles.intro}>
-                    <BookIcon size={32} color="var(--color-primary)" />
-                    <h2 className={styles.introTitle}>הקורסים שלי</h2>
-                    <p className={styles.introText}>קורסים מקצועיים ללמידת אמנות הציפורניים</p>
+                    <span className="eyebrow">האקדמיה</span>
+                    <h2 className={`display ${styles.introTitle}`}>ללמוד את המקצוע מקרוב</h2>
+                    <p className={styles.introText}>
+                        הכשרה מקצועית בקבוצות קטנות עם ליווי אישי. כל הפרטים, המועדים והמחירים מתעדכנים כאן.
+                    </p>
                 </div>
 
-                {courses.length === 0 ? (
-                    <p className={styles.emptyState}>אין קורסים זמינים כרגע</p>
-                ) : (
-                    <div className={styles.courseList}>
-                        {courses.map((course) => {
-                            const extras = courseExtras[course.name] || defaultExtras;
-                            const isFull = course.enrolled >= course.capacity;
-                            const isLimited = !isFull && course.capacity - course.enrolled <= 2;
-
-                            return (
-                                <article key={course.id} className={styles.courseCard}>
-                                    {isFull && <span className={styles.badge} data-status="full">מלא</span>}
-                                    {isLimited && <span className={styles.badge} data-status="limited">מקומות אחרונים</span>}
-
-                                    <h3 className={styles.courseName}>{course.name}</h3>
-                                    <p className={styles.courseDesc}>{course.description || extras.longDescription}</p>
-
-                                    <div className={styles.highlights}>
-                                        {extras.highlights.map((h, i) => {
-                                            const Icon = iconMap[h.icon];
-                                            return (
-                                                <span key={i} className={styles.highlight}>
-                                                    <Icon size={14} />
-                                                    {h.text}
-                                                </span>
-                                            );
-                                        })}
-                                    </div>
-
-                                    <div className={styles.courseMeta}>
-                                        <div className={styles.metaItem}>
-                                            <CalendarIcon size={16} />
-                                            <span>{formatDate(course.date)}</span>
-                                        </div>
-                                        <div className={styles.metaItem}>
-                                            <ClockIcon size={16} />
-                                            <span>{course.duration}</span>
-                                        </div>
-                                        <div className={styles.metaItem}>
-                                            <UsersIcon size={16} />
-                                            <span>{course.enrolled}/{course.capacity}</span>
-                                        </div>
-                                    </div>
-
-                                    <details className={styles.syllabus}>
-                                        <summary>תכנית הקורס</summary>
-                                        <ul>
-                                            {extras.syllabus.map((item, i) => (
-                                                <li key={i}>{item}</li>
-                                            ))}
-                                        </ul>
-                                    </details>
-
-                                    <div className={styles.courseFooter}>
-                                        <div className={styles.priceBox}>
-                                            <span className={styles.priceLabel}>מחיר</span>
-                                            <span className={styles.price}>₪{course.price}</span>
-                                        </div>
-                                        <button
-                                            className={`btn ${isFull ? "btn-secondary" : "btn-primary"}`}
-                                            onClick={() => !isFull && handleRegister(course)}
-                                            disabled={isFull}
-                                        >
-                                            {isFull ? "רשימת המתנה" : "הרשמה"}
-                                        </button>
-                                    </div>
-
-                                    <div className={styles.capacityBar}>
-                                        <div
-                                            className={styles.capacityFill}
-                                            style={{ width: `${(course.enrolled / course.capacity) * 100}%` }}
-                                        />
-                                    </div>
-                                </article>
-                            );
-                        })}
+                {loading ? (
+                    <div className={styles.list} aria-busy="true">
+                        {[0, 1].map((i) => <div key={i} className={styles.skeleton} />)}
                     </div>
+                ) : loadError ? (
+                    <div className={styles.empty} role="alert">
+                        <p>לא הצלחנו לטעון את הקורסים. נסי לרענן את העמוד.</p>
+                    </div>
+                ) : courses.length === 0 ? (
+                    <div className={styles.empty}>
+                        <p className={`display ${styles.emptyTitle}`}>אין קורסים פתוחים כרגע</p>
+                        <p>המועד הבא יפורסם כאן. רוצה שאעדכן אותך? שלחי הודעה.</p>
+                        {whatsapp && (
+                            <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                                <MessageIcon size={16} />
+                                עדכנו אותי על המועד הבא
+                            </a>
+                        )}
+                    </div>
+                ) : (
+                    <>
+                        {upcoming.length === 0 && (
+                            <div className={styles.empty}>
+                                <p className={`display ${styles.emptyTitle}`}>כרגע אין מועד פתוח להרשמה</p>
+                                <p>המחזור הקודם הסתיים. פרטי המחזור הבא יפורסמו כאן.</p>
+                                {whatsapp && (
+                                    <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                                        <MessageIcon size={16} />
+                                        עדכנו אותי על המועד הבא
+                                    </a>
+                                )}
+                            </div>
+                        )}
+
+                        {upcoming.length > 0 && (
+                            <div className={styles.list}>
+                                {upcoming.map(({ course, status }) => (
+                                    <CourseCard
+                                        key={course.id}
+                                        course={course}
+                                        status={status}
+                                        onRegister={() => handleRegister(course)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {past.length > 0 && (
+                            <details className={styles.pastGroup}>
+                                <summary className={styles.pastSummary}>
+                                    מחזורים קודמים ({past.length})
+                                </summary>
+                                <div className={styles.list}>
+                                    {past.map(({ course, status }) => (
+                                        <CourseCard key={course.id} course={course} status={status} />
+                                    ))}
+                                </div>
+                            </details>
+                        )}
+                    </>
                 )}
             </main>
         </div>
+    );
+}
+
+function CourseCard({ course, status, onRegister }: { course: Course; status: CourseStatus; onRegister?: () => void }) {
+    const extras = courseExtras[course.name];
+    const isFull = status === "full";
+    const isPast = status === "past";
+    const remaining = Math.max(0, (Number(course.capacity) || 0) - (Number(course.enrolled) || 0));
+
+    return (
+        <article id={`course-${course.id}`} className={`${styles.card} ${isPast ? styles.cardPast : ""}`}>
+            <div className={styles.cardHead}>
+                <span className={`${styles.status} ${styles[status]}`}>{COURSE_STATUS_LABEL[status]}</span>
+                <h3 className={`display ${styles.cardTitle}`}>{course.name}</h3>
+                <p className={styles.cardDesc}>{course.description || extras?.longDescription}</p>
+            </div>
+
+            {extras && extras.highlights.length > 0 && (
+                <ul className={styles.highlights}>
+                    {extras.highlights.map((h, i) => {
+                        const Icon = iconMap[h.icon];
+                        return (
+                            <li key={i} className={styles.highlight}>
+                                <Icon size={14} />
+                                {h.text}
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+
+            <ul className={styles.meta}>
+                <li><CalendarIcon size={15} /><span>{formatCourseDate(course.date)}</span></li>
+                {course.duration && <li><ClockIcon size={15} /><span>{course.duration}</span></li>}
+                {course.location && <li><MapPinIcon size={15} /><span>{course.location}</span></li>}
+                {course.capacity > 0 && !isPast && (
+                    <li>
+                        <UsersIcon size={15} />
+                        <span className="tabular">{isFull ? "כל המקומות נתפסו" : `נותרו ${remaining} מקומות מתוך ${course.capacity}`}</span>
+                    </li>
+                )}
+            </ul>
+            {course.schedule_info && <p className={styles.schedule}>{course.schedule_info}</p>}
+
+            {extras && extras.syllabus.length > 0 && (
+                <details className={styles.syllabus}>
+                    <summary>תכנית הקורס</summary>
+                    <ol>
+                        {extras.syllabus.map((item, i) => <li key={i}>{item}</li>)}
+                    </ol>
+                </details>
+            )}
+
+            <div className={styles.cardFooter}>
+                <div className={styles.priceBox}>
+                    <span className={styles.priceLabel}>עלות הקורס</span>
+                    <span className={`display tabular ${styles.price}`}>{formatPrice(course.price)}</span>
+                </div>
+                {isPast ? (
+                    <span className={styles.pastNote}>המחזור הסתיים</span>
+                ) : isFull ? (
+                    <span className={styles.pastNote}>אין מקומות פנויים</span>
+                ) : (
+                    <button type="button" className="btn btn-primary" onClick={onRegister}>
+                        הרשמה לקורס
+                        <ArrowLeftIcon size={16} />
+                    </button>
+                )}
+            </div>
+        </article>
     );
 }

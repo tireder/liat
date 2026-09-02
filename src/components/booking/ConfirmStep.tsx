@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { BookingData } from "@/app/book/page";
-import { CalendarIcon, ClockIcon, MapPinIcon, NailPolishIcon, CheckIcon } from "@/components/icons";
+import { CalendarIcon, ClockIcon, MapPinIcon, NailPolishIcon, UserIcon, CheckIcon } from "@/components/icons";
+import { formatPrice } from "@/lib/landing";
 import styles from "./ConfirmStep.module.css";
 
 interface ConfirmStepProps {
@@ -10,6 +12,7 @@ interface ConfirmStepProps {
     onBack: () => void;
     address?: string;
     isReschedule?: boolean;
+    submitting?: boolean;
 }
 
 const HEBREW_DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
@@ -24,11 +27,15 @@ export default function ConfirmStep({
     onBack,
     address,
     isReschedule = false,
+    submitting = false,
 }: ConfirmStepProps) {
+    const [agreed, setAgreed] = useState(true);
+
     const formatDate = () => {
         if (!bookingData.date) return "";
-        const d = new Date(bookingData.date);
-        return `יום ${HEBREW_DAYS[d.getDay()]}, ${d.getDate()} ${HEBREW_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+        const [y, m, d] = bookingData.date.split("-").map(Number);
+        const date = new Date(y, m - 1, d);
+        return `יום ${HEBREW_DAYS[date.getDay()]}, ${d} ב${HEBREW_MONTHS[m - 1]} ${y}`;
     };
 
     const formatTime = () => {
@@ -39,72 +46,61 @@ export default function ConfirmStep({
         const endMin = startMin + bookingData.serviceDuration;
         const endHour = startHour + Math.floor(endMin / 60);
         const endMinutes = endMin % 60;
-        return `${bookingData.time} - ${endHour.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")}`;
+        return `${bookingData.time} – ${endHour.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")}`;
     };
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h2 className={styles.title}>{isReschedule ? "אישור שינוי תור" : "אישור התור"}</h2>
-                <p className={styles.subtitle}>בדקי שהפרטים נכונים</p>
+                <h2 className={`display ${styles.title}`}>{isReschedule ? "אישור שינוי התור" : "רגע לפני שקובעים"}</h2>
+                <p className={styles.subtitle}>בדקי שהפרטים נכונים ואשרי</p>
             </div>
 
-            {/* Summary Card */}
             <div className={styles.card}>
-                <div className={styles.cardRow}>
-                    <div className={styles.cardIcon}>
-                        <NailPolishIcon size={20} color="var(--color-primary-dark)" />
-                    </div>
-                    <div className={styles.cardContent}>
-                        <span className={styles.cardLabel}>שירות</span>
-                        <span className={styles.cardValue}>{bookingData.serviceName}</span>
-                    </div>
-                    <span className={styles.cardPrice}>₪{bookingData.servicePrice}</span>
+                <div className={styles.row}>
+                    <span className={styles.rowIcon}><NailPolishIcon size={18} /></span>
+                    <span className={styles.rowContent}>
+                        <span className={styles.rowLabel}>טיפול</span>
+                        <span className={`display ${styles.rowValueLarge}`}>{bookingData.serviceName}</span>
+                    </span>
+                    <span className={`display tabular ${styles.price}`}>{formatPrice(bookingData.servicePrice)}</span>
                 </div>
 
                 {bookingData.artistName && (
-                    <div className={styles.cardRow}>
-                        <div className={styles.cardIcon}>
-                            <span style={{ fontSize: "1.1rem" }}>👩‍🎨</span>
-                        </div>
-                        <div className={styles.cardContent}>
-                            <span className={styles.cardLabel}>אמנית</span>
-                            <span className={styles.cardValue}>{bookingData.artistName}</span>
-                        </div>
+                    <div className={styles.row}>
+                        <span className={styles.rowIcon}><UserIcon size={18} /></span>
+                        <span className={styles.rowContent}>
+                            <span className={styles.rowLabel}>אמנית</span>
+                            <span className={styles.rowValue}>{bookingData.artistName}</span>
+                        </span>
                     </div>
                 )}
 
                 <div className={styles.divider} />
 
-                <div className={styles.cardRow}>
-                    <div className={styles.cardIcon}>
-                        <CalendarIcon size={20} color="var(--color-primary-dark)" />
-                    </div>
-                    <div className={styles.cardContent}>
-                        <span className={styles.cardLabel}>תאריך</span>
-                        <span className={styles.cardValue}>{formatDate()}</span>
-                    </div>
+                <div className={styles.row}>
+                    <span className={styles.rowIcon}><CalendarIcon size={18} /></span>
+                    <span className={styles.rowContent}>
+                        <span className={styles.rowLabel}>תאריך</span>
+                        <span className={styles.rowValue}>{formatDate()}</span>
+                    </span>
                 </div>
 
-                <div className={styles.cardRow}>
-                    <div className={styles.cardIcon}>
-                        <ClockIcon size={20} color="var(--color-primary-dark)" />
-                    </div>
-                    <div className={styles.cardContent}>
-                        <span className={styles.cardLabel}>שעה</span>
-                        <span className={styles.cardValue}>{formatTime()}</span>
-                    </div>
+                <div className={styles.row}>
+                    <span className={styles.rowIcon}><ClockIcon size={18} /></span>
+                    <span className={styles.rowContent}>
+                        <span className={styles.rowLabel}>שעה</span>
+                        <span className={`tabular ${styles.rowValue}`} dir="ltr">{formatTime()}</span>
+                    </span>
                 </div>
 
                 {address && (
-                    <div className={styles.cardRow}>
-                        <div className={styles.cardIcon}>
-                            <MapPinIcon size={20} color="var(--color-primary-dark)" />
-                        </div>
-                        <div className={styles.cardContent}>
-                            <span className={styles.cardLabel}>מיקום</span>
-                            <span className={styles.cardValue}>{address}</span>
-                        </div>
+                    <div className={styles.row}>
+                        <span className={styles.rowIcon}><MapPinIcon size={18} /></span>
+                        <span className={styles.rowContent}>
+                            <span className={styles.rowLabel}>מיקום</span>
+                            <span className={styles.rowValue}>{address}</span>
+                        </span>
                     </div>
                 )}
 
@@ -112,14 +108,13 @@ export default function ConfirmStep({
                     <>
                         <div className={styles.divider} />
                         <div className={styles.notes}>
-                            <span className={styles.cardLabel}>הערות</span>
+                            <span className={styles.rowLabel}>הערות</span>
                             <p className={styles.notesText}>{bookingData.notes}</p>
                         </div>
                     </>
                 )}
             </div>
 
-            {/* Policy */}
             <div className={styles.policy}>
                 <h4 className={styles.policyTitle}>מדיניות ביטולים</h4>
                 <p className={styles.policyText}>
@@ -129,21 +124,31 @@ export default function ConfirmStep({
                 </p>
             </div>
 
-            {/* Checkbox */}
             <label className={styles.checkbox}>
-                <input type="checkbox" defaultChecked />
-                <span className={styles.checkmark}>
-                    <CheckIcon size={14} />
+                <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => setAgreed(e.target.checked)}
+                    className={styles.checkboxInput}
+                />
+                <span className={styles.checkmark} aria-hidden="true">
+                    <CheckIcon size={13} />
                 </span>
                 <span>קראתי ומסכימה למדיניות הביטולים</span>
             </label>
 
             <div className={styles.footer}>
-                <button className="btn btn-secondary" onClick={onBack}>
+                <button type="button" className="btn btn-secondary" onClick={onBack} disabled={submitting}>
                     חזרה
                 </button>
-                <button className="btn btn-primary" onClick={onConfirm}>
-                    {isReschedule ? "אישור שינוי" : "אישור וקביעת תור"}
+                <button
+                    type="button"
+                    className="btn btn-primary btn-lg"
+                    onClick={onConfirm}
+                    disabled={!agreed || submitting}
+                    aria-busy={submitting}
+                >
+                    {submitting ? "שולחת..." : isReschedule ? "אישור השינוי" : "אישור וקביעת התור"}
                 </button>
             </div>
         </div>

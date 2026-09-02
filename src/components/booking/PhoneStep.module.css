@@ -1,145 +1,114 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    padding: 1.5rem;
+    gap: 1.5rem;
 }
 
 .header {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 0.75rem;
-}
-
-.iconWrapper {
-    width: 72px;
-    height: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-accent);
-    border-radius: 50%;
-    margin-bottom: 0.5rem;
+    gap: 0.4rem;
 }
 
 .title {
-    font-size: 1.375rem;
-    font-weight: 600;
-    color: var(--foreground);
+    font-size: 1.8rem;
+    color: var(--ink);
 }
 
 .subtitle {
-    font-size: 0.9375rem;
-    color: var(--foreground-muted);
-    max-width: 280px;
+    color: var(--ink-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.checking {
+    color: var(--ink-muted);
+    font-size: 0.925rem;
+    padding: 1rem 0;
 }
 
 .form {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.1rem;
 }
 
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.field label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--foreground);
-}
-
-.input {
-    width: 100%;
-    padding: 1rem;
-    background: var(--background);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    font-size: 1.125rem;
-    color: var(--foreground);
-    font-family: inherit;
-    transition: border-color 0.15s ease;
-}
-
-.input:focus {
-    outline: none;
-    border-color: var(--color-primary);
+.ltrInput {
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
 }
 
 .otpInput {
     text-align: center;
-    font-size: 1.5rem;
-    letter-spacing: 0.5em;
-    font-weight: 600;
+    font-size: 1.75rem;
+    letter-spacing: 0.45em;
+    font-variant-numeric: tabular-nums;
+    padding-inline-start: calc(1.1rem + 0.45em);
 }
 
-.hint {
-    font-size: 0.8125rem;
-    color: var(--foreground-muted);
-    text-align: center;
+.resend {
+    align-self: center;
+    font-size: 0.9rem;
 }
 
-.error {
-    padding: 0.75rem 1rem;
-    background: #fed7d7;
-    color: #742a2a;
-    border-radius: var(--radius-md);
-    font-size: 0.875rem;
-    text-align: center;
-}
-
-.resendBtn {
-    background: none;
-    border: none;
-    color: var(--color-primary);
-    font-size: 0.875rem;
-    font-weight: 500;
+.remember {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.9rem;
+    color: var(--ink-muted);
     cursor: pointer;
-    text-decoration: underline;
-    padding: 0.5rem;
-    font-family: inherit;
+    min-height: 44px;
 }
 
-.resendBtn:hover {
-    color: var(--color-primary-dark);
+.rememberInput {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+}
+
+.rememberBox {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    border: 1.5px solid var(--line-strong);
+    background: var(--bg-card);
+    color: transparent;
+    transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.rememberInput:checked + .rememberBox {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--ink-inverse);
+}
+
+.rememberInput:focus-visible + .rememberBox {
+    outline: 2px solid var(--rose-deep);
+    outline-offset: 2px;
 }
 
 .verified {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    padding: 2rem;
+    gap: 0.9rem;
+    padding: 1.5rem 0;
+    color: var(--ink-muted);
+    animation: fadeInUp 0.4s var(--ease-out);
 }
 
 .verifiedIcon {
     width: 64px;
     height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #22543d;
+    display: grid;
+    place-items: center;
     border-radius: 50%;
-    animation: scaleIn 0.3s ease-out;
-}
-
-@keyframes scaleIn {
-    from {
-        transform: scale(0);
-    }
-
-    to {
-        transform: scale(1);
-    }
-}
-
-.verified span {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #22543d;
+    background: var(--ink);
+    color: var(--ink-inverse);
 }
