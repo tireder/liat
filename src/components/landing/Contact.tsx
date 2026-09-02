@@ -1,266 +1,185 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapPinIcon, PhoneIcon, MessageIcon, ClockIcon, InstagramIcon, FacebookIcon, TikTokIcon, ArrowLeftIcon, WazeIcon } from "@/components/icons";
+import { MapPinIcon, PhoneIcon, MessageIcon, ClockIcon, InstagramIcon, FacebookIcon, TikTokIcon, WazeIcon, ArrowLeftIcon } from "@/components/icons";
+import SectionHeader from "./SectionHeader";
+import Reveal from "@/components/ui/Reveal";
+import type { SiteInfo } from "@/lib/landing";
+import { groupOperatingHours, getTodayHours, toInternationalPhone, toWhatsAppNumber } from "@/lib/landing";
 import styles from "./Contact.module.css";
 
-type SiteSettings = {
-    phone: string;
-    address: string;
-    whatsapp: string;
-    instagram: string;
-    facebook: string;
-    tiktok: string;
-    operatingHours: {
-        dayOfWeek: number;
-        openTime: string | null;
-        closeTime: string | null;
-        active: boolean;
-    }[];
-};
+interface ContactProps {
+    initialSettings?: SiteInfo;
+}
 
-const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-
-export default function Contact() {
-    const [settings, setSettings] = useState<SiteSettings | null>(null);
+export default function Contact({ initialSettings }: ContactProps) {
+    const [settings, setSettings] = useState<SiteInfo | null>(initialSettings || null);
 
     useEffect(() => {
+        if (initialSettings) return;
         async function fetchSettings() {
             try {
                 const res = await fetch("/api/settings");
-                if (res.ok) {
-                    const data = await res.json();
-                    setSettings(data);
-                }
+                if (res.ok) setSettings(await res.json());
             } catch (error) {
                 console.error("Error fetching settings:", error);
             }
         }
         fetchSettings();
-    }, []);
+    }, [initialSettings]);
 
-    // Format phone for tel: link (remove dashes/spaces)
-    const phoneLink = settings?.phone?.replace(/[-\s]/g, "") || "0501234567";
-    const whatsappNumber = settings?.whatsapp?.replace(/[-\s+]/g, "") || "972501234567";
-    const googleMapsUrl = `https://maps.google.com/?q=${encodeURIComponent(settings?.address || "רחוב הרצל 50 תל אביב")}`;
+    const address = settings?.address?.trim() || "";
+    const phone = settings?.phone?.trim() || "";
+    const whatsapp = toWhatsAppNumber(settings?.whatsapp || settings?.phone);
+    const telHref = toInternationalPhone(phone);
+    const hoursRows = groupOperatingHours(settings?.operatingHours);
+    const today = getTodayHours(settings?.operatingHours);
+    const openToday = !!(today && today.active && today.openTime && today.closeTime);
 
-    // Group operating hours for display
-    const getHoursDisplay = () => {
-        if (!settings?.operatingHours?.length) {
-            return [
-                { label: "ראשון - חמישי", hours: "09:00 - 20:00" },
-                { label: "שישי", hours: "09:00 - 14:00" },
-                { label: "שבת", hours: "סגור" },
-            ];
-        }
+    const mapsUrl = address ? `https://maps.google.com/?q=${encodeURIComponent(address)}` : "";
+    const wazeUrl = address ? `https://waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes` : "";
+    const embedUrl = address
+        ? `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`
+        : "";
 
-        const hours = settings.operatingHours;
-        const result: { label: string; hours: string }[] = [];
+    const socials = [
+        settings?.instagram ? { href: settings.instagram, label: "Instagram", Icon: InstagramIcon } : null,
+        settings?.facebook ? { href: settings.facebook, label: "Facebook", Icon: FacebookIcon } : null,
+        settings?.tiktok ? { href: settings.tiktok, label: "TikTok", Icon: TikTokIcon } : null,
+    ].filter(Boolean) as { href: string; label: string; Icon: React.FC<{ size?: number }> }[];
 
-        // Check if Sunday-Thursday have same hours
-        const sunToThu = hours.filter(h => h.dayOfWeek >= 0 && h.dayOfWeek <= 4);
-        const allSame = sunToThu.every(h =>
-            h.active === sunToThu[0]?.active &&
-            h.openTime === sunToThu[0]?.openTime &&
-            h.closeTime === sunToThu[0]?.closeTime
-        );
-
-        if (allSame && sunToThu.length === 5 && sunToThu[0]?.active) {
-            result.push({
-                label: "ראשון - חמישי",
-                hours: `${sunToThu[0].openTime} - ${sunToThu[0].closeTime}`,
-            });
-        } else {
-            // Show individual days
-            sunToThu.forEach(h => {
-                result.push({
-                    label: dayNames[h.dayOfWeek],
-                    hours: h.active ? `${h.openTime} - ${h.closeTime}` : "סגור",
-                });
-            });
-        }
-
-        // Friday
-        const friday = hours.find(h => h.dayOfWeek === 5);
-        if (friday) {
-            result.push({
-                label: "שישי",
-                hours: friday.active ? `${friday.openTime} - ${friday.closeTime}` : "סגור",
-            });
-        }
-
-        // Saturday
-        const saturday = hours.find(h => h.dayOfWeek === 6);
-        if (saturday) {
-            result.push({
-                label: "שבת",
-                hours: saturday.active ? `${saturday.openTime} - ${saturday.closeTime}` : "סגור",
-            });
-        }
-
-        return result;
-    };
-
-    const hoursDisplay = getHoursDisplay();
+    const hasAnything = address || phone || hoursRows.length > 0 || socials.length > 0;
+    if (settings && !hasAnything) return null;
 
     return (
-        <section className={styles.section} id="contact">
-            <div className={styles.container}>
-                {/* Header */}
-                <header className={styles.header}>
-                    <span className={styles.badge}>
-                        <MapPinIcon size={14} />
-                        צרי קשר
-                    </span>
-                    <h2 className={styles.title}>בואי לבקר</h2>
-                    <p className={styles.subtitle}>
-                        מחכה לך בסלון לפגישה אישית
-                    </p>
-                    <div className={styles.divider} />
-                </header>
+        <section className={`section ${styles.section}`} id="contact" aria-labelledby="contact-title">
+            <div className="container">
+                <Reveal>
+                    <SectionHeader
+                        id="contact-title"
+                        eyebrow="ביקור בסלון"
+                        title="בואי לבקר"
+                        subtitle="כל מה שצריך כדי להגיע, להתקשר או לשלוח הודעה. מחכה לך."
+                    />
+                </Reveal>
 
-                <div className={styles.content}>
-                    {/* Contact Info */}
+                <div className={styles.grid}>
                     <div className={styles.info}>
                         {/* Address */}
-                        <a
-                            href={googleMapsUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.infoCard}
-                        >
-                            <div className={styles.infoIcon}>
-                                <MapPinIcon size={22} />
-                            </div>
-                            <div className={styles.infoContent}>
-                                <h3 className={styles.infoTitle}>כתובת</h3>
-                                <p className={styles.infoText}>{settings?.address || "רחוב הרצל 50, תל אביב"}</p>
-                                <span className={styles.infoLink}>
-                                    פתח במפות
-                                    <ArrowLeftIcon size={14} />
-                                </span>
-                            </div>
-                        </a>
-
-                        {/* Phone */}
-                        <a href={`tel:+972${phoneLink.startsWith("0") ? phoneLink.slice(1) : phoneLink}`} className={styles.infoCard}>
-                            <div className={styles.infoIcon}>
-                                <PhoneIcon size={22} />
-                            </div>
-                            <div className={styles.infoContent}>
-                                <h3 className={styles.infoTitle}>טלפון</h3>
-                                <p className={styles.infoText}>{settings?.phone}</p>
-                                <span className={styles.infoLink}>
-                                    התקשרי עכשיו
-                                    <ArrowLeftIcon size={14} />
-                                </span>
-                            </div>
-                        </a>
-
-                        {/* WhatsApp */}
-                        <a
-                            href={`https://wa.me/${whatsappNumber}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.infoCard}
-                        >
-                            <div className={styles.infoIcon}>
-                                <MessageIcon size={22} />
-                            </div>
-                            <div className={styles.infoContent}>
-                                <h3 className={styles.infoTitle}>וואטסאפ</h3>
-                                <p className={styles.infoText}>שלחי הודעה</p>
-                                <span className={styles.infoLink}>
-                                    פתח וואטסאפ
-                                    <ArrowLeftIcon size={14} />
-                                </span>
-                            </div>
-                        </a>
+                        {address && (
+                            <Reveal className={styles.block}>
+                                <div className={styles.blockHead}>
+                                    <span className={styles.blockIcon}><MapPinIcon size={18} /></span>
+                                    <h3 className={styles.blockTitle}>איפה אנחנו</h3>
+                                </div>
+                                <p className={`display ${styles.address}`}>{address}</p>
+                                <div className={styles.buttonRow}>
+                                    <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
+                                        <WazeIcon size={16} />
+                                        ניווט ב-Waze
+                                    </a>
+                                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">
+                                        <MapPinIcon size={16} />
+                                        Google Maps
+                                    </a>
+                                </div>
+                            </Reveal>
+                        )}
 
                         {/* Hours */}
-                        <div className={styles.infoCard}>
-                            <div className={styles.infoIcon}>
-                                <ClockIcon size={22} />
-                            </div>
-                            <div className={styles.infoContent}>
-                                <h3 className={styles.infoTitle}>שעות פעילות</h3>
-                                <div className={styles.hours}>
-                                    {hoursDisplay.map((row, index) => (
-                                        <div key={index} className={styles.hoursRow}>
-                                            <span>{row.label}</span>
-                                            <span>{row.hours}</span>
-                                        </div>
+                        {hoursRows.length > 0 && (
+                            <Reveal className={styles.block} delay={60}>
+                                <div className={styles.blockHead}>
+                                    <span className={styles.blockIcon}><ClockIcon size={18} /></span>
+                                    <h3 className={styles.blockTitle}>שעות פעילות</h3>
+                                    <span className={`${styles.openBadge} ${openToday ? styles.open : styles.closed}`}>
+                                        {openToday ? `פתוח היום עד ${today!.closeTime!.slice(0, 5)}` : "סגור היום"}
+                                    </span>
+                                </div>
+                                <dl className={styles.hours}>
+                                    {hoursRows.map((row) => {
+                                        const isToday = row.days.includes(new Date().getDay());
+                                        return (
+                                            <div key={row.label} className={`${styles.hoursRow} ${isToday ? styles.hoursToday : ""}`}>
+                                                <dt>{row.label}</dt>
+                                                <dd className={`tabular ${row.closed ? styles.hoursClosed : ""}`} dir={row.closed ? undefined : "ltr"}>{row.hours}</dd>
+                                            </div>
+                                        );
+                                    })}
+                                </dl>
+                            </Reveal>
+                        )}
+
+                        {/* Contact */}
+                        {(phone || whatsapp) && (
+                            <Reveal className={styles.block} delay={120}>
+                                <div className={styles.blockHead}>
+                                    <span className={styles.blockIcon}><PhoneIcon size={18} /></span>
+                                    <h3 className={styles.blockTitle}>דברי איתי</h3>
+                                </div>
+                                <div className={styles.contactList}>
+                                    {whatsapp && (
+                                        <a
+                                            href={`https://wa.me/${whatsapp}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={styles.contactLink}
+                                        >
+                                            <MessageIcon size={18} />
+                                            <span className={styles.contactText}>
+                                                <span className={styles.contactLabel}>וואטסאפ</span>
+                                                <span>שלחי הודעה, אחזור אלייך בהקדם</span>
+                                            </span>
+                                            <ArrowLeftIcon size={16} />
+                                        </a>
+                                    )}
+                                    {phone && (
+                                        <a href={`tel:${telHref}`} className={styles.contactLink}>
+                                            <PhoneIcon size={18} />
+                                            <span className={styles.contactText}>
+                                                <span className={styles.contactLabel}>טלפון</span>
+                                                <span className="tabular" dir="ltr">{phone}</span>
+                                            </span>
+                                            <ArrowLeftIcon size={16} />
+                                        </a>
+                                    )}
+                                </div>
+                            </Reveal>
+                        )}
+
+                        {socials.length > 0 && (
+                            <Reveal className={styles.social} delay={160}>
+                                <span className={styles.socialLabel}>עקבי אחריי</span>
+                                <div className={styles.socialLinks}>
+                                    {socials.map(({ href, label, Icon }) => (
+                                        <a
+                                            key={label}
+                                            href={href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={styles.socialLink}
+                                            aria-label={label}
+                                        >
+                                            <Icon size={20} />
+                                        </a>
                                     ))}
                                 </div>
-                            </div>
-                        </div>
+                            </Reveal>
+                        )}
                     </div>
 
-                    {/* Map with Navigation Links */}
-                    <div className={styles.mapContainer}>
-                        <iframe
-                            className={styles.mapEmbed}
-                            src={`https://maps.google.com/maps?q=${encodeURIComponent(settings?.address || "רחוב הרצל 50 תל אביב")}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            title="מיקום הסלון"
-                            allowFullScreen
-                        />
-                        <div className={styles.mapButtons}>
-                            <a
-                                href={`https://waze.com/ul?q=${encodeURIComponent(settings?.address || "רחוב הרצל 50 תל אביב")}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.mapBtn}
-                            >
-                                <WazeIcon size={18} />
-                                Waze
-                            </a>
-                            <a
-                                href={googleMapsUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.mapBtn}
-                            >
-                                <MapPinIcon size={18} />
-                                Google Maps
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Social Links */}
-                <div className={styles.social}>
-                    <span className={styles.socialLabel}>עקבי אחריי</span>
-                    <div className={styles.socialLinks}>
-                        <a
-                            href={settings?.instagram || "https://instagram.com"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.socialLink}
-                            aria-label="Instagram"
-                        >
-                            <InstagramIcon size={20} />
-                        </a>
-                        <a
-                            href={settings?.facebook || "https://facebook.com"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.socialLink}
-                            aria-label="Facebook"
-                        >
-                            <FacebookIcon size={20} />
-                        </a>
-                        <a
-                            href={settings?.tiktok || "https://tiktok.com"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.socialLink}
-                            aria-label="TikTok"
-                        >
-                            <TikTokIcon size={20} />
-                        </a>
-                    </div>
+                    {embedUrl && (
+                        <Reveal className={styles.map} delay={100}>
+                            <iframe
+                                className={styles.mapEmbed}
+                                src={embedUrl}
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                title="מיקום הסלון במפה"
+                                allowFullScreen
+                            />
+                        </Reveal>
+                    )}
                 </div>
             </div>
         </section>

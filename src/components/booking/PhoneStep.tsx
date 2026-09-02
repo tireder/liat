@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { BookingData } from "@/app/book/page";
-import { PhoneIcon, CheckIcon } from "@/components/icons";
+import { CheckIcon } from "@/components/icons";
 import styles from "./PhoneStep.module.css";
 
 interface PhoneStepProps {
@@ -21,19 +21,18 @@ export default function PhoneStep({
     const [name, setName] = useState(bookingData.name || "");
     const [otp, setOtp] = useState("");
     const [step, setStep] = useState<"phone" | "otp" | "name" | "verified">("phone");
-    const [loading, setLoading] = useState(true); // Start loading to check session
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [otpMethod, setOtpMethod] = useState<"supabase" | "sms4free">("sms4free");
     const [rememberMe, setRememberMe] = useState(false);
 
-    // Supabase client for supabase auth method
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabase = supabaseUrl && supabaseAnonKey
         ? createBrowserClient(supabaseUrl, supabaseAnonKey)
         : null;
 
-    // Check for existing session on mount
+    // Existing session (30 or 365 days) skips verification
     useEffect(() => {
         let mounted = true;
 
@@ -42,7 +41,6 @@ export default function PhoneStep({
                 const savedSession = localStorage.getItem("liart_session");
                 if (savedSession) {
                     const session = JSON.parse(savedSession);
-                    // Check if session is still valid (7 days) - support both old and new format
                     const isValid = session.expiresAt
                         ? new Date(session.expiresAt) > new Date()
                         : session.expires > Date.now();
@@ -52,22 +50,15 @@ export default function PhoneStep({
                         const savedName = session.name || session.phone;
                         setPhone(session.phone);
 
-                        // Check if name looks like a phone number (contains digit and length >= 9)
-                        // If so, treat as "incomplete profile" and ask for name
                         const isNameNumeric = /\d{3}/.test(savedName) && savedName.replace(/\D/g, "").length >= 9;
-
                         if (isNameNumeric) {
-                            // Pre-fill but force name step
                             setName("");
                             setStep("name");
-                            // Don't auto-proceed
                         } else {
-                            // Good profile
                             setName(savedName);
                             updateBookingData({ phone: session.phone, name: savedName });
                             setStep("verified");
                             setLoading(false);
-                            // Give parent component time to update before moving to next step
                             setTimeout(() => {
                                 if (mounted) onNext();
                             }, 800);
@@ -86,18 +77,15 @@ export default function PhoneStep({
 
         return () => { mounted = false; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Run only once on mount
+    }, []);
 
-    // Fetch OTP method from settings
     useEffect(() => {
         async function fetchSettings() {
             try {
                 const res = await fetch("/api/settings");
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.otp_method) {
-                        setOtpMethod(data.otp_method);
-                    }
+                    if (data.otp_method) setOtpMethod(data.otp_method);
                 }
             } catch (err) {
                 console.error("Error fetching settings:", err);
@@ -106,30 +94,19 @@ export default function PhoneStep({
         fetchSettings();
     }, []);
 
-    // Format phone for E.164 (Israeli format)
     function formatPhoneE164(phoneNumber: string): string {
         const cleaned = phoneNumber.replace(/\D/g, "");
-        if (cleaned.startsWith("0")) {
-            return "+972" + cleaned.slice(1);
-        }
-        if (cleaned.startsWith("972")) {
-            return "+" + cleaned;
-        }
+        if (cleaned.startsWith("0")) return "+972" + cleaned.slice(1);
+        if (cleaned.startsWith("972")) return "+" + cleaned;
         return "+972" + cleaned;
     }
 
     async function sendOtp() {
         setError("");
         setLoading(true);
-
         try {
             if (otpMethod === "supabase" && supabase) {
-                // Use Supabase Auth
-                const formattedPhone = formatPhoneE164(phone);
-                const { error: otpError } = await supabase.auth.signInWithOtp({
-                    phone: formattedPhone,
-                });
-
+                const { error: otpError } = await supabase.auth.signInWithOtp({ phone: formatPhoneE164(phone) });
                 if (otpError) {
                     setError("שגיאה בשליחת הקוד. נסי שוב.");
                     console.error("OTP Error:", otpError);
@@ -137,71 +114,61 @@ export default function PhoneStep({
                     setStep("otp");
                 }
             } else {
-                // Use SMS4Free custom API
                 const res = await fetch("/api/otp/send", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ phone }),
                 });
-
                 const data = await res.json();
-
-                if (!res.ok) {
-                    setError(data.error || "שגיאה בשליחת הקוד. נסי שוב.");
-                } else {
-                    setStep("otp");
-                }
+                if (!res.ok) setError(data.error || "שגיאה בשליחת הקוד. נסי שוב.");
+                else setStep("otp");
             }
         } catch {
             setError("שגיאה בשליחת הקוד");
         }
-
         setLoading(false);
     }
 
     async function verifyOtp() {
         setError("");
         setLoading(true);
-
         try {
             if (otpMethod === "supabase" && supabase) {
-                // Use Supabase Auth
-                const formattedPhone = formatPhoneE164(phone);
                 const { error: verifyError } = await supabase.auth.verifyOtp({
-                    phone: formattedPhone,
+                    phone: formatPhoneE164(phone),
                     token: otp,
                     type: "sms",
                 });
-
                 if (verifyError) {
                     setError("קוד שגוי. נסי שוב.");
                     console.error("Verify Error:", verifyError);
                 } else {
-                    // Go to name step
                     setStep("name");
                 }
             } else {
-                // Use SMS4Free custom API
                 const res = await fetch("/api/otp/verify", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ phone, code: otp }),
                 });
-
                 const data = await res.json();
-
-                if (!res.ok) {
-                    setError(data.error || "קוד שגוי. נסי שוב.");
-                } else {
-                    // Go to name step
-                    setStep("name");
-                }
+                if (!res.ok) setError(data.error || "קוד שגוי. נסי שוב.");
+                else setStep("name");
             }
         } catch {
             setError("שגיאה באימות הקוד");
         }
-
         setLoading(false);
+    }
+
+    function saveNameAndContinue() {
+        const trimmedName = name.trim() || phone;
+        const days = rememberMe ? 365 : 30;
+        const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+        localStorage.setItem("liart_session", JSON.stringify({ phone, name: trimmedName, expiresAt }));
+        updateBookingData({ phone, name: trimmedName });
+        setStep("verified");
+        setTimeout(() => onNext(), 900);
     }
 
     const isValidPhone = phone.replace(/\D/g, "").length >= 9;
@@ -209,149 +176,129 @@ export default function PhoneStep({
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <div className={styles.iconWrapper}>
-                    <PhoneIcon size={32} color="var(--color-primary)" />
-                </div>
-                <h2 className={styles.title}>אימות מספר טלפון</h2>
+                <h2 className={`display ${styles.title}`}>
+                    {step === "name" ? "נעים להכיר" : step === "verified" ? "מאומת" : "נתחיל מהטלפון"}
+                </h2>
                 <p className={styles.subtitle}>
-                    נשלח אליך קוד SMS לאימות הזמנתך
+                    {step === "phone" && "נשלח לך קוד ב-SMS כדי לאשר את ההזמנה. בלי סיסמאות."}
+                    {step === "otp" && <>הקוד נשלח למספר <span className="tabular" dir="ltr">{phone}</span></>}
+                    {step === "name" && "איך לקרוא לך? כך נדע לפנות אלייך בהודעות."}
+                    {step === "verified" && "מספר הטלפון אומת בהצלחה"}
                 </p>
             </div>
 
             {loading && step === "phone" && (
-                <div className={styles.form}>
-                    <p style={{ textAlign: "center", color: "var(--foreground-muted)" }}>בודק הרשאות...</p>
-                </div>
+                <p className={styles.checking} role="status">בודקת אם כבר נפגשנו...</p>
             )}
 
             {!loading && step === "phone" && (
-                <div className={styles.form}>
-                    <div className={styles.field}>
-                        <label>מספר טלפון</label>
+                <form
+                    className={styles.form}
+                    onSubmit={(e) => { e.preventDefault(); if (isValidPhone && !loading) sendOtp(); }}
+                >
+                    <div className="field">
+                        <label htmlFor="phone" className="field-label">מספר טלפון נייד</label>
                         <input
+                            id="phone"
                             type="tel"
+                            inputMode="tel"
+                            autoComplete="tel"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            placeholder="050-1234567"
+                            placeholder="050-0000000"
                             dir="ltr"
-                            className={styles.input}
+                            className={`input ${styles.ltrInput}`}
+                            aria-invalid={!!error}
+                            aria-describedby={error ? "phone-error" : undefined}
+                            autoFocus
                         />
+                        {error && <p id="phone-error" className="field-error" role="alert">{error}</p>}
                     </div>
-
-                    {error && <div className={styles.error}>{error}</div>}
-
-                    <button
-                        className="btn btn-primary"
-                        onClick={sendOtp}
-                        disabled={!isValidPhone || loading}
-                        style={{ width: "100%" }}
-                    >
-                        {loading ? "שולח..." : "שלחי קוד אימות"}
+                    <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={!isValidPhone || loading}>
+                        {loading ? "שולחת..." : "שלחי לי קוד אימות"}
                     </button>
-                </div>
+                </form>
             )}
 
             {step === "otp" && (
-                <div className={styles.form}>
-                    <div className={styles.field}>
-                        <label>קוד אימות</label>
+                <form
+                    className={styles.form}
+                    onSubmit={(e) => { e.preventDefault(); if (otp.length === 6 && !loading) verifyOtp(); }}
+                >
+                    <div className="field">
+                        <label htmlFor="otp" className="field-label">קוד אימות</label>
                         <input
+                            id="otp"
                             type="text"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
                             value={otp}
                             onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                            placeholder="123456"
+                            placeholder="••••••"
                             dir="ltr"
-                            className={`${styles.input} ${styles.otpInput}`}
+                            className={`input ${styles.otpInput}`}
                             maxLength={6}
-                            autoComplete="one-time-code"
+                            aria-invalid={!!error}
+                            aria-describedby={error ? "otp-error" : undefined}
+                            autoFocus
                         />
-                        <span className={styles.hint}>
-                            הקוד נשלח ל-{phone}
-                        </span>
+                        {error && <p id="otp-error" className="field-error" role="alert">{error}</p>}
                     </div>
-
-                    {error && <div className={styles.error}>{error}</div>}
-
-                    <button
-                        className="btn btn-primary"
-                        onClick={verifyOtp}
-                        disabled={otp.length !== 6 || loading}
-                        style={{ width: "100%" }}
-                    >
-                        {loading ? "מאמת..." : "אמתי קוד"}
+                    <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={otp.length !== 6 || loading}>
+                        {loading ? "מאמתת..." : "אימות והמשך"}
                     </button>
-
                     <button
-                        className={styles.resendBtn}
-                        onClick={() => {
-                            setStep("phone");
-                            setOtp("");
-                            setError("");
-                        }}
+                        type="button"
+                        className={`btn btn-text ${styles.resend}`}
+                        onClick={() => { setStep("phone"); setOtp(""); setError(""); }}
                     >
-                        שלחי קוד חדש
+                        לא קיבלת? שלחי קוד חדש
                     </button>
-                </div>
+                </form>
             )}
 
             {step === "name" && (
-                <div className={styles.form}>
-                    <div className={styles.field}>
-                        <label>מה השם שלך?</label>
+                <form
+                    className={styles.form}
+                    onSubmit={(e) => { e.preventDefault(); if (name.trim()) saveNameAndContinue(); }}
+                >
+                    <div className="field">
+                        <label htmlFor="name" className="field-label">השם שלך</label>
                         <input
+                            id="name"
                             type="text"
+                            autoComplete="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="שם מלא"
-                            className={styles.input}
+                            className="input"
                             autoFocus
                         />
                     </div>
 
-                    <div className={styles.checkboxWrapper} style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <label className={styles.remember}>
                         <input
                             type="checkbox"
-                            id="remember-me"
                             checked={rememberMe}
                             onChange={(e) => setRememberMe(e.target.checked)}
+                            className={styles.rememberInput}
                         />
-                        <label htmlFor="remember-me" style={{ fontSize: "0.9rem", color: "var(--foreground-muted)" }}>
-                            זכור אותי לתמיד
-                        </label>
-                    </div>
+                        <span className={styles.rememberBox} aria-hidden="true"><CheckIcon size={12} /></span>
+                        <span>זכרי אותי במכשיר הזה</span>
+                    </label>
 
-                    <button
-                        className="btn btn-primary"
-                        onClick={() => {
-                            const trimmedName = name.trim() || phone;
-
-                            // Session expiry: 30 days default, 365 days if "remember me" checked
-                            const days = rememberMe ? 365 : 30;
-                            const expiresAt = new Date(Date.now() + (days * 24 * 60 * 60 * 1000)).toISOString();
-
-                            const session = { phone, name: trimmedName, expiresAt };
-                            localStorage.setItem("liart_session", JSON.stringify(session));
-
-                            updateBookingData({ phone, name: trimmedName });
-                            setStep("verified");
-                            setTimeout(() => {
-                                onNext();
-                            }, 1000);
-                        }}
-                        disabled={!name.trim()}
-                        style={{ width: "100%" }}
-                    >
+                    <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={!name.trim()}>
                         המשך
                     </button>
-                </div>
+                </form>
             )}
 
             {step === "verified" && (
-                <div className={styles.verified}>
-                    <div className={styles.verifiedIcon}>
-                        <CheckIcon size={32} color="white" />
-                    </div>
-                    <span>מספר הטלפון אומת בהצלחה!</span>
+                <div className={styles.verified} role="status">
+                    <span className={styles.verifiedIcon}>
+                        <CheckIcon size={28} />
+                    </span>
+                    <span>ממשיכים לבחירת הטיפול...</span>
                 </div>
             )}
         </div>

@@ -1,46 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { NailPolishIcon, SparklesIcon, DiamondIcon, PaletteIcon, FootIcon, WrenchIcon, ClockIcon } from "@/components/icons";
+import Link from "next/link";
+import { ClockIcon, ArrowLeftIcon } from "@/components/icons";
+import SectionHeader from "./SectionHeader";
+import Reveal from "@/components/ui/Reveal";
+import type { ServiceItem } from "@/lib/landing";
+import { formatPrice } from "@/lib/landing";
 import styles from "./Services.module.css";
 
-interface Service {
-    id: string;
-    name: string;
-    description: string | null;
-    duration: number;
-    price: number;
-}
-
 interface ServicesProps {
-    initialServices?: Service[];
+    initialServices?: ServiceItem[];
 }
 
-// Map service names to icons
-const iconMap: Record<string, React.FC<{ size?: number; color?: string }>> = {
-    "מניקור קלאסי": NailPolishIcon,
-    "מניקור ג׳ל": SparklesIcon,
-    "בניית ציפורניים": DiamondIcon,
-    "עיצוב נייל ארט": PaletteIcon,
-    "פדיקור ספא": FootIcon,
-    "תיקון ציפורן": WrenchIcon,
-};
+const SWATCHES = ["var(--rose)", "var(--nude)", "var(--peach)", "var(--rose-soft)", "var(--beige)", "var(--rose-deep)"];
 
 export default function Services({ initialServices }: ServicesProps) {
-    const [services, setServices] = useState<Service[]>(initialServices || []);
+    const [services, setServices] = useState<ServiceItem[]>(initialServices || []);
     const [loading, setLoading] = useState(!initialServices);
 
     useEffect(() => {
-        // Only fetch if no initial data provided
         if (initialServices) return;
-
         async function fetchServices() {
             try {
                 const res = await fetch("/api/services");
-                if (res.ok) {
-                    const data = await res.json();
-                    setServices(data);
-                }
+                if (res.ok) setServices(await res.json());
             } catch (error) {
                 console.error("Error fetching services:", error);
             }
@@ -49,71 +33,72 @@ export default function Services({ initialServices }: ServicesProps) {
         fetchServices();
     }, [initialServices]);
 
-    const getIcon = (name: string) => iconMap[name] || NailPolishIcon;
-
-    if (loading) {
-        return (
-            <section className={styles.section} id="services">
-                <div className={styles.container}>
-                    <div className={styles.loading}>טוען שירותים...</div>
-                </div>
-            </section>
-        );
-    }
+    if (!loading && services.length === 0) return null;
 
     return (
-        <section className={styles.section} id="services">
-            <div className={styles.container}>
-                {/* Header */}
-                <header className={styles.header}>
-                    <span className={styles.badge}>
-                        <NailPolishIcon size={14} />
-                        טיפולים
-                    </span>
-                    <h2 className={styles.title}>השירותים שלי</h2>
-                    <p className={styles.subtitle}>
-                        מגוון טיפולים מקצועיים בסטנדרט הגבוה ביותר
-                    </p>
-                    <div className={styles.divider} />
-                </header>
+        <section className={`section ${styles.section}`} id="services" aria-labelledby="services-title">
+            <div className="container">
+                <Reveal>
+                    <SectionHeader
+                        id="services-title"
+                        eyebrow="טיפולים"
+                        title="הטיפולים שלי"
+                        subtitle="כל טיפול מתחיל בייעוץ קצר ומותאם אלייך. בחרי מה מתאים לך ונקבע תור."
+                        action={
+                            <Link href="/book" className="btn btn-secondary">
+                                לכל הטיפולים והזמנה
+                                <ArrowLeftIcon size={16} />
+                            </Link>
+                        }
+                    />
+                </Reveal>
 
-                {/* Services Grid */}
-                <div className={styles.grid}>
-                    {services.map((service, index) => {
-                        const Icon = getIcon(service.name);
-                        return (
-                            <article
-                                key={service.id}
-                                className={styles.card}
-                                style={{ animationDelay: `${index * 0.08}s` }}
-                            >
-                                <div className={styles.cardIcon}>
-                                    <Icon size={24} color="var(--color-primary-dark)" />
+                {loading ? (
+                    <div className={styles.grid} aria-busy="true">
+                        {[0, 1, 2].map((i) => (
+                            <div key={i} className={`${styles.card} ${styles.skeleton}`} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className={styles.grid}>
+                        {services.map((service, index) => (
+                            <Reveal key={service.id} as="article" className={styles.card} delay={Math.min(index, 5) * 60}>
+                                <div className={styles.cardTop}>
+                                    <span className={`display tabular ${styles.index}`}>
+                                        {String(index + 1).padStart(2, "0")}
+                                    </span>
+                                    <span
+                                        className={styles.swatch}
+                                        style={{ background: SWATCHES[index % SWATCHES.length] }}
+                                        aria-hidden="true"
+                                    />
                                 </div>
-                                <div className={styles.cardContent}>
-                                    <h3 className={styles.cardTitle}>{service.name}</h3>
-                                    <p className={styles.cardDescription}>{service.description}</p>
-                                    <div className={styles.cardMeta}>
-                                        <span className={styles.duration}>
-                                            <ClockIcon size={14} />
-                                            {service.duration} דקות
-                                        </span>
-                                        <span className={styles.price}>
-                                            ₪{service.price}
-                                        </span>
-                                    </div>
-                                </div>
-                            </article>
-                        );
-                    })}
-                </div>
 
-                {/* CTA */}
-                <div className={styles.cta}>
-                    <a href="/book" className="btn btn-primary">
-                        לקביעת תור
-                    </a>
-                </div>
+                                <h3 className={`display ${styles.name}`}>{service.name}</h3>
+                                {service.description && (
+                                    <p className={styles.description}>{service.description}</p>
+                                )}
+
+                                <div className={styles.meta}>
+                                    <span className={styles.duration}>
+                                        <ClockIcon size={14} />
+                                        <span className="tabular">{service.duration} דק׳</span>
+                                    </span>
+                                    <span className={`display tabular ${styles.price}`}>{formatPrice(service.price)}</span>
+                                </div>
+
+                                <Link
+                                    href={`/book?service=${service.id}`}
+                                    className={styles.cta}
+                                    aria-label={`קביעת תור ל${service.name}`}
+                                >
+                                    <span>קביעת תור</span>
+                                    <ArrowLeftIcon size={16} />
+                                </Link>
+                            </Reveal>
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     );

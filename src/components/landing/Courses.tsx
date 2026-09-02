@@ -1,39 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookIcon, CalendarIcon, ClockIcon, UsersIcon, CheckIcon, CertificateIcon, GiftIcon } from "@/components/icons";
+import Link from "next/link";
+import { ArrowLeftIcon, CalendarIcon, ClockIcon, MapPinIcon, UsersIcon } from "@/components/icons";
+import SectionHeader from "./SectionHeader";
+import Reveal from "@/components/ui/Reveal";
+import type { CourseItem, CourseStatus } from "@/lib/landing";
+import { getCourseStatus, COURSE_STATUS_LABEL, formatCourseDate, formatPrice } from "@/lib/landing";
 import styles from "./Courses.module.css";
 
-interface Course {
-    id: string;
-    name: string;
-    description: string | null;
-    date: string;
-    duration: string;
-    price: number;
-    capacity: number;
-    enrolled: number;
+interface CoursesProps {
+    initialCourses?: CourseItem[];
 }
 
-interface CoursesProps {
-    initialCourses?: Course[];
+function dateParts(dateStr: string) {
+    const d = new Date(dateStr + (dateStr.length === 10 ? "T00:00:00" : ""));
+    if (Number.isNaN(d.getTime())) return { day: "", month: "" };
+    return {
+        day: d.toLocaleDateString("he-IL", { day: "numeric" }),
+        month: d.toLocaleDateString("he-IL", { month: "short" }),
+    };
 }
 
 export default function Courses({ initialCourses }: CoursesProps) {
-    const [courses, setCourses] = useState<Course[]>(initialCourses || []);
+    const [courses, setCourses] = useState<CourseItem[]>(initialCourses || []);
     const [loading, setLoading] = useState(!initialCourses);
 
     useEffect(() => {
-        // Only fetch if no initial data provided
         if (initialCourses) return;
-
         async function fetchCourses() {
             try {
                 const res = await fetch("/api/courses");
-                if (res.ok) {
-                    const data = await res.json();
-                    setCourses(data);
-                }
+                if (res.ok) setCourses(await res.json());
             } catch (error) {
                 console.error("Error fetching courses:", error);
             }
@@ -42,121 +40,121 @@ export default function Courses({ initialCourses }: CoursesProps) {
         fetchCourses();
     }, [initialCourses]);
 
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" });
-    };
+    if (loading || courses.length === 0) return null;
 
-    if (loading) {
-        return (
-            <section className={styles.section} id="courses">
-                <div className={styles.container}>
-                    <div className={styles.loading}>טוען קורסים...</div>
-                </div>
-            </section>
-        );
-    }
-
-    if (courses.length === 0) {
-        return null; // Hide section if no courses
-    }
+    const withStatus = courses.map((course) => ({ course, status: getCourseStatus(course) as CourseStatus }));
+    const upcoming = withStatus
+        .filter((c) => c.status !== "past")
+        .sort((a, b) => a.course.date.localeCompare(b.course.date))
+        .slice(0, 3);
+    const hasOnlyPast = upcoming.length === 0;
 
     return (
-        <section className={styles.section} id="courses">
-            <div className={styles.container}>
-                {/* Header */}
-                <header className={styles.header}>
-                    <span className={styles.badge}>
-                        <BookIcon size={14} />
-                        קורסים
-                    </span>
-                    <h2 className={styles.title}>למדי מהמומחים</h2>
-                    <p className={styles.subtitle}>
-                        קורסים מקצועיים ללמידת אמנות הציפורניים
-                    </p>
-                    <div className={styles.divider} />
-                </header>
+        <section className={`section ${styles.section}`} id="courses" aria-labelledby="courses-title">
+            <div className="container">
+                <Reveal>
+                    <SectionHeader
+                        id="courses-title"
+                        eyebrow="קורסים והכשרה"
+                        title="ללמוד את המקצוע מקרוב"
+                        subtitle="הכשרה מקצועית בקבוצות קטנות, עם ליווי אישי לאורך כל הדרך."
+                        action={
+                            !hasOnlyPast ? (
+                                <Link href="/courses" className="btn btn-secondary">
+                                    לכל הקורסים
+                                    <ArrowLeftIcon size={16} />
+                                </Link>
+                            ) : undefined
+                        }
+                    />
+                </Reveal>
 
-                {/* Courses List */}
-                <div className={styles.list}>
-                    {courses.map((course, index) => (
-                        <article
-                            key={course.id}
-                            className={styles.card}
-                            style={{ animationDelay: `${index * 0.12}s` }}
-                        >
-                            {/* Badge */}
-                            {course.enrolled >= course.capacity ? (
-                                <span className={styles.statusBadge} data-status="full">
-                                    מלא
-                                </span>
-                            ) : course.capacity - course.enrolled <= 2 ? (
-                                <span className={styles.statusBadge} data-status="limited">
-                                    מקומות אחרונים
-                                </span>
-                            ) : null}
+                {hasOnlyPast ? (
+                    <Reveal className={styles.emptyState}>
+                        <span className="eyebrow">המועד הבא בקרוב</span>
+                        <h3 className={`display ${styles.emptyTitle}`}>כרגע אין מועד פתוח להרשמה</h3>
+                        <p className={styles.emptyText}>
+                            המחזור הקודם הסתיים. פרטי המחזור הבא יפורסמו כאן. רוצה לשמור מקום? שלחי הודעה ואעדכן אותך ראשונה.
+                        </p>
+                        <a href="#contact" className="btn btn-primary">
+                            עדכנו אותי על המועד הבא
+                        </a>
+                    </Reveal>
+                ) : (
+                    <div className={styles.list}>
+                        {upcoming.map(({ course, status }, index) => {
+                            const { day, month } = dateParts(course.date);
+                            const remaining = Math.max(0, (Number(course.capacity) || 0) - (Number(course.enrolled) || 0));
+                            const isFull = status === "full";
 
-                            <div className={styles.cardHeader}>
-                                <h3 className={styles.cardTitle}>{course.name}</h3>
-                                <p className={styles.cardDescription}>{course.description}</p>
-                            </div>
-
-                            {/* Highlights */}
-                            <div className={styles.highlights}>
-                                <span className={styles.highlight}>
-                                    <CertificateIcon size={14} />
-                                    תעודה מוכרת
-                                </span>
-                                <span className={styles.highlight}>
-                                    <GiftIcon size={14} />
-                                    ערכה מתנה
-                                </span>
-                            </div>
-
-                            {/* Meta */}
-                            <div className={styles.cardMeta}>
-                                <div className={styles.metaRow}>
-                                    <div className={styles.metaItem}>
-                                        <CalendarIcon size={16} />
-                                        <span>{formatDate(course.date)}</span>
+                            return (
+                                <Reveal key={course.id} as="article" className={styles.card} delay={index * 80}>
+                                    <div className={styles.dateBlock} aria-hidden="true">
+                                        <span className={`display tabular ${styles.dateDay}`}>{day}</span>
+                                        <span className={styles.dateMonth}>{month}</span>
                                     </div>
-                                    <div className={styles.metaItem}>
-                                        <ClockIcon size={16} />
-                                        <span>{course.duration}</span>
-                                    </div>
-                                </div>
-                                <div className={styles.metaRow}>
-                                    <div className={styles.metaItem}>
-                                        <UsersIcon size={16} />
-                                        <span>{course.enrolled}/{course.capacity} משתתפות</span>
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* Footer */}
-                            <div className={styles.cardFooter}>
-                                <div className={styles.priceContainer}>
-                                    <span className={styles.priceLabel}>מחיר</span>
-                                    <span className={styles.price}>₪{course.price}</span>
-                                </div>
-                                <a
-                                    href="/courses"
-                                    className={`btn ${course.enrolled >= course.capacity ? 'btn-secondary' : 'btn-primary'} ${styles.registerBtn}`}
-                                >
-                                    {course.enrolled >= course.capacity ? "לרשימת המתנה" : "הרשמה"}
-                                </a>
-                            </div>
+                                    <div className={styles.body}>
+                                        <span className={`${styles.status} ${styles[status]}`}>
+                                            {COURSE_STATUS_LABEL[status]}
+                                        </span>
+                                        <h3 className={`display ${styles.name}`}>{course.name}</h3>
+                                        {course.description && (
+                                            <p className={styles.description}>{course.description}</p>
+                                        )}
 
-                            {/* Capacity bar */}
-                            <div className={styles.capacityBar}>
-                                <div
-                                    className={styles.capacityFill}
-                                    style={{ width: `${(course.enrolled / course.capacity) * 100}%` }}
-                                />
-                            </div>
-                        </article>
-                    ))}
-                </div>
+                                        <ul className={styles.meta}>
+                                            <li>
+                                                <CalendarIcon size={15} />
+                                                <span>{formatCourseDate(course.date)}</span>
+                                            </li>
+                                            {course.duration && (
+                                                <li>
+                                                    <ClockIcon size={15} />
+                                                    <span>{course.duration}</span>
+                                                </li>
+                                            )}
+                                            {course.location && (
+                                                <li>
+                                                    <MapPinIcon size={15} />
+                                                    <span>{course.location}</span>
+                                                </li>
+                                            )}
+                                            {course.capacity > 0 && (
+                                                <li>
+                                                    <UsersIcon size={15} />
+                                                    <span className="tabular">
+                                                        {isFull ? "כל המקומות נתפסו" : `נותרו ${remaining} מקומות מתוך ${course.capacity}`}
+                                                    </span>
+                                                </li>
+                                            )}
+                                        </ul>
+                                        {course.schedule_info && (
+                                            <p className={styles.schedule}>{course.schedule_info}</p>
+                                        )}
+                                    </div>
+
+                                    <div className={styles.footer}>
+                                        <div className={styles.priceBox}>
+                                            <span className={styles.priceLabel}>עלות הקורס</span>
+                                            <span className={`display tabular ${styles.price}`}>{formatPrice(course.price)}</span>
+                                        </div>
+                                        {isFull ? (
+                                            <Link href="/courses" className="btn btn-secondary">
+                                                לפרטים נוספים
+                                            </Link>
+                                        ) : (
+                                            <Link href={`/courses#course-${course.id}`} className="btn btn-primary">
+                                                הרשמה לקורס
+                                                <ArrowLeftIcon size={16} />
+                                            </Link>
+                                        )}
+                                    </div>
+                                </Reveal>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </section>
     );

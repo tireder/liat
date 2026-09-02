@@ -12,6 +12,7 @@ import DateTimeStep from "@/components/booking/DateTimeStep";
 import NotesStep from "@/components/booking/NotesStep";
 import ConfirmStep from "@/components/booking/ConfirmStep";
 import SuccessStep from "@/components/booking/SuccessStep";
+import { useToast } from "@/components/ui/Toast";
 import styles from "./page.module.css";
 
 export interface BookingData {
@@ -48,31 +49,31 @@ const initialBookingData: BookingData = {
     notes: "",
 };
 
-const STEPS = ["טלפון", "אמנית", "שירות", "תאריך ושעה", "הערות", "אישור"];
+const STEPS = ["טלפון", "אמנית", "טיפול", "תאריך ושעה", "הערות", "אישור"];
 
 function BookingContent() {
     const searchParams = useSearchParams();
     const rescheduleId = searchParams.get("reschedule");
+    const preselectServiceId = searchParams.get("service");
+    const { showToast } = useToast();
 
     const [currentStep, setCurrentStep] = useState(0);
-    const [bookingData, setBookingData] = useState<BookingData>(initialBookingData);
+    const [bookingData, setBookingData] = useState<BookingData>(() => ({
+        ...initialBookingData,
+        rescheduleId: rescheduleId || undefined,
+    }));
     const [isComplete, setIsComplete] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [settings, setSettings] = useState<SiteSettings | null>(null);
     const [loadingReschedule, setLoadingReschedule] = useState(false);
 
+    // Returning clients skip phone verification
     useEffect(() => {
-        if (rescheduleId) {
-            setBookingData(prev => ({ ...prev, rescheduleId }));
-        }
-    }, [rescheduleId]);
-
-    // Check for session to skip PhoneStep
-    useEffect(() => {
-        const savedSession = localStorage.getItem("liart_session");
-        if (savedSession) {
+        function restoreSession() {
+            const savedSession = localStorage.getItem("liart_session");
+            if (!savedSession) return;
             try {
                 const session = JSON.parse(savedSession);
-                // Check expiry
                 const isValid = session.expiresAt
                     ? new Date(session.expiresAt) > new Date()
                     : session.expires > Date.now();
@@ -83,13 +84,13 @@ function BookingContent() {
                         phone: session.phone,
                         name: session.name
                     }));
-                    // Skip to ArtistStep (index 1)
                     setCurrentStep(1);
                 }
             } catch (e) {
                 console.error("Invalid session", e);
             }
         }
+        restoreSession();
     }, [rescheduleId]);
 
     useEffect(() => {
@@ -110,20 +111,22 @@ function BookingContent() {
         fetchSettings();
     }, []);
 
+    // Scroll to top whenever the step changes (mobile-friendly)
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [currentStep]);
+
     const updateBookingData = (data: Partial<BookingData>) => {
         setBookingData((prev) => ({ ...prev, ...data }));
     };
 
     const nextStep = async () => {
-        // If finishing PhoneStep and we have a rescheduleId, fetch booking details
         if (currentStep === 0 && bookingData.rescheduleId) {
             setLoadingReschedule(true);
             try {
                 const res = await fetch(`/api/bookings/${bookingData.rescheduleId}?phone=${bookingData.phone}`);
                 if (res.ok) {
                     const booking = await res.json();
-
-                    // Populate booking data
                     setBookingData(prev => ({
                         ...prev,
                         serviceId: booking.service.id,
@@ -133,14 +136,11 @@ function BookingContent() {
                         name: booking.client.name || prev.name,
                         artistId: booking.artist_id || prev.artistId,
                     }));
-
-                    // Jump to DateTimeStep (Step 3)
                     setCurrentStep(3);
                     setLoadingReschedule(false);
                     return;
                 } else {
-                    console.error("Failed to fetch booking for reschedule");
-                    // Optionally show error or just continue as normal booking
+                    showToast("לא הצלחנו לטעון את פרטי התור. נמשיך כהזמנה חדשה.", "warning");
                 }
             } catch (err) {
                 console.error("Error fetching booking:", err);
@@ -155,7 +155,6 @@ function BookingContent() {
 
     const prevStep = () => {
         if (currentStep > 0) {
-            // If we jumped from Phone(0) to DateTime(3) during reschedule, back should go to Phone(0)
             if (currentStep === 3 && bookingData.rescheduleId) {
                 setCurrentStep(0);
                 return;
@@ -165,12 +164,13 @@ function BookingContent() {
     };
 
     const handleConfirm = async () => {
+        if (submitting) return;
+        setSubmitting(true);
         try {
             const isReschedule = !!bookingData.rescheduleId;
             const endpoint = isReschedule
                 ? `/api/bookings/${bookingData.rescheduleId}`
                 : "/api/bookings";
-
             const method = isReschedule ? "PATCH" : "POST";
 
             const bodyData: Record<string, unknown> = {
@@ -182,32 +182,27 @@ function BookingContent() {
                 artistId: bookingData.artistId,
             };
 
-            // For reschedule, don't send status — let the backend decide
-            // based on the 24h rule whether it's auto-approved or pending
-            if (!isReschedule) {
-                // New booking — no status needed, the create endpoint handles it
-            }
-
             const res = await fetch(endpoint, {
-                method: method,
+                method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(bodyData),
             });
+
             if (res.ok) {
                 const data = await res.json().catch(() => null);
-                // For reschedule: check if the response indicates pending approval
                 if (isReschedule && data?.pending) {
-                    alert('בקשת השינוי נשלחה וממתינה לאישור');
+                    showToast("בקשת השינוי נשלחה וממתינה לאישור", "info", 5000);
                 }
                 setIsComplete(true);
             } else {
                 const errData = await res.json().catch(() => null);
-                alert(errData?.error || 'שגיאה בעדכון התור');
+                showToast(errData?.error || "שגיאה בעדכון התור. נסי שוב.", "error", 5000);
             }
         } catch (error) {
             console.error("Booking error:", error);
-            alert('שגיאה בעדכון התור');
+            showToast("שגיאה בעדכון התור. בדקי את החיבור ונסי שוב.", "error", 5000);
         }
+        setSubmitting(false);
     };
 
     if (isComplete) {
@@ -224,83 +219,93 @@ function BookingContent() {
     }
 
     if (loadingReschedule) {
-        return <div className={styles.page}><div className={styles.loading}>טוען פרטי תור...</div></div>;
+        return (
+            <div className={styles.page}>
+                <div className={styles.loading} role="status">טוענת את פרטי התור...</div>
+            </div>
+        );
     }
 
     return (
         <div className={styles.page}>
-            {/* Header */}
             <header className={styles.header}>
-                <button
-                    className={styles.backBtn}
-                    onClick={currentStep > 0 ? prevStep : undefined}
-                    disabled={currentStep === 0}
-                    aria-label="חזרה"
-                >
-                    <ArrowLeftIcon size={20} />
-                </button>
-                <h1 className={styles.title}>
-                    {bookingData.rescheduleId ? "שינוי מועד תור" : "קביעת תור"}
-                </h1>
-                <Link href="/" className={styles.closeBtn} aria-label="סגירה">
-                    <XIcon size={20} />
-                </Link>
+                <div className={styles.headerInner}>
+                    <button
+                        type="button"
+                        className={styles.iconBtn}
+                        onClick={currentStep > 0 ? prevStep : undefined}
+                        disabled={currentStep === 0}
+                        aria-label="חזרה לשלב הקודם"
+                    >
+                        <ArrowLeftIcon size={20} style={{ transform: "scaleX(-1)" }} />
+                    </button>
+                    <div className={styles.titleBlock}>
+                        <span className={styles.brand}>ליאת · nail artist</span>
+                        <h1 className={styles.title}>
+                            {bookingData.rescheduleId ? "שינוי מועד תור" : "קביעת תור"}
+                        </h1>
+                    </div>
+                    <Link href="/" className={styles.iconBtn} aria-label="סגירה וחזרה לדף הבית">
+                        <XIcon size={20} />
+                    </Link>
+                </div>
+                <StepIndicator steps={STEPS} currentStep={currentStep} />
             </header>
 
-            {/* Progress */}
-            <StepIndicator steps={STEPS} currentStep={currentStep} />
-
-            {/* Content */}
-            <main className={styles.content}>
-                {currentStep === 0 && (
-                    <PhoneStep
-                        bookingData={bookingData}
-                        updateBookingData={updateBookingData}
-                        onNext={nextStep}
-                    />
-                )}
-                {currentStep === 1 && (
-                    <ArtistStep
-                        bookingData={bookingData}
-                        updateBookingData={updateBookingData}
-                        onNext={nextStep}
-                    />
-                )}
-                {currentStep === 2 && (
-                    <ServiceStep
-                        bookingData={bookingData}
-                        updateBookingData={updateBookingData}
-                        onNext={nextStep}
-                        artistId={bookingData.artistId}
-                    />
-                )}
-                {currentStep === 3 && (
-                    <DateTimeStep
-                        bookingData={bookingData}
-                        updateBookingData={updateBookingData}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                        rescheduleMode={!!bookingData.rescheduleId}
-                        artistId={bookingData.artistId}
-                    />
-                )}
-                {currentStep === 4 && (
-                    <NotesStep
-                        bookingData={bookingData}
-                        updateBookingData={updateBookingData}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                    />
-                )}
-                {currentStep === 5 && (
-                    <ConfirmStep
-                        bookingData={bookingData}
-                        onConfirm={handleConfirm}
-                        onBack={prevStep}
-                        address={settings?.address}
-                        isReschedule={!!bookingData.rescheduleId}
-                    />
-                )}
+            <main className={styles.content} id="main">
+                <div key={currentStep} className={`${styles.stepCard} animate-fade-in-up`}>
+                    {currentStep === 0 && (
+                        <PhoneStep
+                            bookingData={bookingData}
+                            updateBookingData={updateBookingData}
+                            onNext={nextStep}
+                        />
+                    )}
+                    {currentStep === 1 && (
+                        <ArtistStep
+                            bookingData={bookingData}
+                            updateBookingData={updateBookingData}
+                            onNext={nextStep}
+                        />
+                    )}
+                    {currentStep === 2 && (
+                        <ServiceStep
+                            bookingData={bookingData}
+                            updateBookingData={updateBookingData}
+                            onNext={nextStep}
+                            artistId={bookingData.artistId}
+                            preselectServiceId={preselectServiceId}
+                        />
+                    )}
+                    {currentStep === 3 && (
+                        <DateTimeStep
+                            bookingData={bookingData}
+                            updateBookingData={updateBookingData}
+                            onNext={nextStep}
+                            onBack={prevStep}
+                            rescheduleMode={!!bookingData.rescheduleId}
+                            artistId={bookingData.artistId}
+                        />
+                    )}
+                    {currentStep === 4 && (
+                        <NotesStep
+                            bookingData={bookingData}
+                            updateBookingData={updateBookingData}
+                            onNext={nextStep}
+                            onBack={prevStep}
+                        />
+                    )}
+                    {currentStep === 5 && (
+                        <ConfirmStep
+                            bookingData={bookingData}
+                            onConfirm={handleConfirm}
+                            onBack={prevStep}
+                            address={settings?.address}
+                            isReschedule={!!bookingData.rescheduleId}
+                            submitting={submitting}
+                        />
+                    )}
+                </div>
             </main>
         </div>
     );
@@ -308,7 +313,7 @@ function BookingContent() {
 
 export default function BookingPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className={styles.page}><div className={styles.loading}>טוען...</div></div>}>
             <BookingContent />
         </Suspense>
     );

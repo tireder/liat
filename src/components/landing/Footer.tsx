@@ -1,80 +1,113 @@
-"use client";
-
 import Link from "next/link";
-import { NailPolishIcon, CalendarIcon, HeartIcon } from "@/components/icons";
+import { InstagramIcon, FacebookIcon, TikTokIcon, CalendarIcon } from "@/components/icons";
+import type { SiteInfo } from "@/lib/landing";
+import { toInternationalPhone } from "@/lib/landing";
 import styles from "./Footer.module.css";
 
-export default function Footer() {
-    const currentYear = new Date().getFullYear();
+interface FooterProps {
+    settings?: SiteInfo;
+}
+
+const NAV = [
+    { label: "קביעת תור", href: "/book" },
+    { label: "טיפולים", href: "/#services" },
+    { label: "גלריה", href: "/gallery" },
+    { label: "קורסים", href: "/courses" },
+    { label: "אודות", href: "/#about" },
+    { label: "התורים שלי", href: "/my-bookings" },
+];
+
+const LEGAL = [
+    { label: "תקנון", href: "/terms" },
+    { label: "פרטיות", href: "/privacy" },
+    { label: "מדיניות ביטולים", href: "/cancellation" },
+    { label: "הצהרת נגישות", href: "/accessibility" },
+];
+
+export default function Footer({ settings }: FooterProps) {
+    const year = new Date().getFullYear();
+    const name = settings?.businessName || "ליאת";
+    const phone = settings?.phone?.trim();
+    const address = settings?.address?.trim();
+
+    const socials = [
+        settings?.instagram ? { href: settings.instagram, label: "Instagram", Icon: InstagramIcon } : null,
+        settings?.facebook ? { href: settings.facebook, label: "Facebook", Icon: FacebookIcon } : null,
+        settings?.tiktok ? { href: settings.tiktok, label: "TikTok", Icon: TikTokIcon } : null,
+    ].filter(Boolean) as { href: string; label: string; Icon: React.FC<{ size?: number }> }[];
 
     return (
         <footer className={styles.footer}>
-            <div className={styles.container}>
-                {/* Main Footer */}
-                <div className={styles.main}>
-                    {/* Brand */}
-                    <div className={styles.brand}>
-                        <div className={styles.logo}>
-                            <NailPolishIcon size={20} color="var(--color-primary)" />
-                            <span>ליאת</span>
+            <div className={`container ${styles.inner}`}>
+                <div className={styles.brandCol}>
+                    <Link href="/" className={styles.brand}>
+                        <span className={`display ${styles.brandName}`}>{name}</span>
+                        <span className={styles.brandSub}>nail artist</span>
+                    </Link>
+                    {(address || phone) && (
+                        <address className={styles.address}>
+                            {address && <span>{address}</span>}
+                            {phone && (
+                                <a href={`tel:${toInternationalPhone(phone)}`} className="tabular" dir="ltr">
+                                    {phone}
+                                </a>
+                            )}
+                        </address>
+                    )}
+                    {socials.length > 0 && (
+                        <div className={styles.socials}>
+                            {socials.map(({ href, label, Icon }) => (
+                                <a
+                                    key={label}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={label}
+                                    className={styles.socialLink}
+                                >
+                                    <Icon size={18} />
+                                </a>
+                            ))}
                         </div>
-                        <p className={styles.tagline}>nail artist</p>
-                    </div>
-
-                    {/* Quick Links */}
-                    <nav className={styles.nav}>
-                        <h4 className={styles.navTitle}>ניווט</h4>
-                        <ul className={styles.navList}>
-                            <li><Link href="/book">קביעת תור</Link></li>
-                            <li><Link href="/courses">קורסים</Link></li>
-                            <li><Link href="/gallery">גלריה</Link></li>
-                            <li><Link href="#about">אודות</Link></li>
-                            <li><Link href="#contact">צרי קשר</Link></li>
-                        </ul>
-                    </nav>
-
-                    {/* Policies */}
-                    <nav className={styles.nav}>
-                        <h4 className={styles.navTitle}>מידע</h4>
-                        <ul className={styles.navList}>
-                            <li><Link href="/terms">תקנון</Link></li>
-                            <li><Link href="/privacy">פרטיות</Link></li>
-                            <li><Link href="/cancellation">ביטולים</Link></li>
-                            <li><Link href="/accessibility">נגישות</Link></li>
-                        </ul>
-                    </nav>
-
-                    {/* CTA */}
-                    <div className={styles.cta}>
-                        <h4 className={styles.ctaTitle}>מוכנה להתחיל?</h4>
-                        <Link href="/book" className={`btn btn-primary ${styles.ctaBtn}`}>
-                            <CalendarIcon size={18} />
-                            קביעת תור
-                        </Link>
-                    </div>
+                    )}
                 </div>
 
-                {/* Bottom Bar */}
-                <div className={styles.bottom}>
-                    <p className={styles.copyright}>
-                        © {currentYear} ליאת nail artist. כל הזכויות שמורות.
-                    </p>
+                <nav className={styles.col} aria-label="ניווט">
+                    <h4 className={styles.colTitle}>ניווט</h4>
+                    <ul className={styles.list}>
+                        {NAV.map((l) => (
+                            <li key={l.href}><Link href={l.href}>{l.label}</Link></li>
+                        ))}
+                    </ul>
+                </nav>
 
-                    <p className={styles.credit}>
-                        <HeartIcon size={14} />
-                        <span style={{ marginInlineStart: 8 }}>
-                            Site made by:{" "}
-                            <a
-                                href="https://mbdev.space"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: "inherit", textDecoration: "underline" }}
-                            >
-                                MBD
-                            </a>
-                        </span>
-                    </p>
+                <nav className={styles.col} aria-label="מידע משפטי">
+                    <h4 className={styles.colTitle}>מידע</h4>
+                    <ul className={styles.list}>
+                        {LEGAL.map((l) => (
+                            <li key={l.href}><Link href={l.href}>{l.label}</Link></li>
+                        ))}
+                    </ul>
+                </nav>
+
+                <div className={styles.ctaCol}>
+                    <h4 className={styles.colTitle}>מוכנה להתחיל?</h4>
+                    <p className={styles.ctaText}>קביעת תור אונליין, אישור מיידי ב-SMS.</p>
+                    <Link href="/book" className="btn btn-primary">
+                        <CalendarIcon size={16} />
+                        קביעת תור
+                    </Link>
                 </div>
+            </div>
+
+            <div className={`container ${styles.bottom}`}>
+                <p className={styles.copyright}>© {year} {name} nail artist. כל הזכויות שמורות.</p>
+                <p className={styles.credit}>
+                    Site by{" "}
+                    <a href="https://mbdev.space" target="_blank" rel="noopener noreferrer">
+                        MBD
+                    </a>
+                </p>
             </div>
         </footer>
     );

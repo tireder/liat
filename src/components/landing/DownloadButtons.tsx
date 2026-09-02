@@ -2,58 +2,51 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useToast } from "@/components/ui/Toast";
+import styles from "./DownloadButtons.module.css";
+
+type Platform = "ios" | "android" | "desktop";
 
 export default function DownloadButtons() {
-    const [platform, setPlatform] = useState<"ios" | "android" | "desktop" | null>(null);
+    const [platform, setPlatform] = useState<Platform | null>(null);
+    const { showToast } = useToast();
 
     useEffect(() => {
-        // Basic user agent detection
-        const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-        if (/android/i.test(userAgent)) {
-            setPlatform("android");
-        } else if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
-            setPlatform("ios");
-        } else {
-            setPlatform("desktop");
+        function detect() {
+            const ua = navigator.userAgent || navigator.vendor || "";
+            if (/android/i.test(ua)) setPlatform("android");
+            else if (/iPad|iPhone|iPod/.test(ua)) setPlatform("ios");
+            else setPlatform("desktop");
         }
+        detect();
     }, []);
 
-    // Avoid hydration mismatch by not rendering until platform is known
-    if (!platform) return <div className="h-14" />; // Placeholder height
+    // Reserve height until the platform is known to avoid layout shift
+    if (!platform) return <div className={styles.placeholder} aria-hidden="true" />;
+
+    const showIos = platform === "ios" || platform === "desktop";
+    const showAndroid = platform === "android" || platform === "desktop";
 
     return (
-        <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-end items-center mt-8">
-            {(platform === "ios" || platform === "desktop") && (
+        <div className={styles.row}>
+            {showIos && (
                 <button
-                    className="transition-transform hover:scale-105 active:scale-95"
-                    onClick={() => alert("App Store link coming soon!")}
-                    aria-label="Download on the App Store"
+                    type="button"
+                    className={styles.badge}
+                    onClick={() => showToast("הקישור ל-App Store יתפרסם בקרוב", "info")}
+                    aria-label="הורדה מ-App Store"
                 >
-                    <Image
-                        src="/images/apple.png"
-                        alt="Download on the App Store"
-                        width={280}
-                        height={83}
-                        className="h-[170] w-auto"
-                        unoptimized
-                    />
+                    <Image src="/images/apple.png" alt="" width={280} height={83} className={styles.badgeImg} unoptimized />
                 </button>
             )}
-
-            {(platform === "android" || platform === "desktop") && (
+            {showAndroid && (
                 <button
-                    className="transition-transform hover:scale-105 active:scale-95"
-                    onClick={() => alert("Google Play link coming soon!")}
-                    aria-label="Get it on Google Play"
+                    type="button"
+                    className={styles.badge}
+                    onClick={() => showToast("הקישור ל-Google Play יתפרסם בקרוב", "info")}
+                    aria-label="הורדה מ-Google Play"
                 >
-                    <Image
-                        src="/images/google.png"
-                        alt="Get it on Google Play"
-                        width={280}
-                        height={83}
-                        className="h-[187px] w-auto"
-                        unoptimized
-                    />
+                    <Image src="/images/google.png" alt="" width={280} height={83} className={styles.badgeImg} unoptimized />
                 </button>
             )}
         </div>

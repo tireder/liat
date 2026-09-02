@@ -1,78 +1,50 @@
 .container {
-    padding: 1rem 1.25rem;
-    background: var(--background-card);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.steps {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-}
-
-.step {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0.25rem 1rem 0.75rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.375rem;
-    flex: 1;
+    gap: 0.5rem;
 }
 
-.dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
+.row {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.counter {
     font-size: 0.75rem;
-    font-weight: 600;
-    transition: all 0.25s ease;
-}
-
-.step.completed .dot {
-    background: var(--color-primary);
-    color: white;
-}
-
-.step.active .dot {
-    background: var(--color-primary);
-    color: white;
-    box-shadow: 0 0 0 4px rgba(201, 168, 160, 0.2);
-}
-
-.step.upcoming .dot {
-    background: var(--border-color);
-    color: var(--foreground-muted);
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
 }
 
 .label {
-    font-size: 0.6875rem;
-    color: var(--foreground-muted);
-    text-align: center;
-    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ink);
 }
 
-.step.active .label {
-    color: var(--foreground);
-    font-weight: 500;
+.segments {
+    list-style: none;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 4px;
 }
 
-.step.completed .label {
-    color: var(--color-primary-dark);
-}
-
-/* Progress Bar */
-.progressBar {
+.segment {
     height: 3px;
-    background: var(--border-color);
-    border-radius: 9999px;
-    overflow: hidden;
+    border-radius: 3px;
+    background: var(--line);
+    transition: background var(--transition-base);
 }
 
-.progressFill {
-    height: 100%;
-    background: var(--color-primary);
-    border-radius: 9999px;
-    transition: width 0.3s ease;
+.segment.done {
+    background: var(--rose);
+}
+
+.segment.active {
+    background: var(--ink);
 }

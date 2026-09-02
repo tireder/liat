@@ -1,116 +1,180 @@
+import Header from "@/components/landing/Header";
 import Hero from "@/components/landing/Hero";
-import AppPromotion from "@/components/landing/AppPromotion";
+import TrustBar from "@/components/landing/TrustBar";
 import Services from "@/components/landing/Services";
-import MyBookingsWidget from "@/components/ui/MyBookingsWidget";
-import Courses from "@/components/landing/Courses";
 import Gallery from "@/components/landing/Gallery";
 import Reviews from "@/components/landing/Reviews";
+import Courses from "@/components/landing/Courses";
 import About from "@/components/landing/About";
+import AppPromotion from "@/components/landing/AppPromotion";
 import Contact from "@/components/landing/Contact";
+import CTASection from "@/components/landing/CTASection";
 import Footer from "@/components/landing/Footer";
+import MyBookingsWidget from "@/components/ui/MyBookingsWidget";
 import { createAdminClient } from "@/lib/supabase/server";
+import type { CourseItem, GalleryImage, ReviewSummary, ServiceItem, SiteInfo } from "@/lib/landing";
 
-// Fetch all data in parallel on the server
-async function getPageData() {
+// Refresh landing data every minute without blocking the request path
+export const revalidate = 60;
+
+interface PageData {
+  settings: SiteInfo;
+  services: ServiceItem[];
+  courses: CourseItem[];
+  gallery: GalleryImage[];
+  reviews: ReviewSummary;
+}
+
+const EMPTY: PageData = {
+  settings: {},
+  services: [],
+  courses: [],
+  gallery: [],
+  reviews: { reviews: [], averageRating: 0, totalReviews: 0 },
+};
+
+async function getPageData(): Promise<PageData> {
   try {
     const supabase = createAdminClient();
 
-    // Parallel fetching for faster load - ALL landing page data
-    const [settingsRes, servicesRes, coursesRes, registrationsRes, galleryRes, reviewsRes] = await Promise.all([
-      supabase.from("settings").select("*"),
-      supabase.from("services").select("*").eq("active", true).order("sort_order"),
-      supabase.from("courses").select("*").eq("active", true).order("date"),
-      supabase.from("course_registrations").select("course_id").eq("status", "confirmed"),
-      supabase.from("gallery").select("id, image_url, title, description").eq("active", true).order("sort_order").limit(6),
-      supabase.from("reviews")
-        .select("id, rating, comment, created_at, clients(name)")
-        .eq("public", true)
-        .eq("approved", true)
-        .order("created_at", { ascending: false })
-        .limit(6),
-    ]);
+    const [settingsRes, hoursRes, servicesRes, coursesRes, registrationsRes, galleryRes, reviewsRes, ratingsRes] =
+      await Promise.all([
+        supabase.from("settings").select("key, value"),
+        supabase.from("operating_hours").select("day_of_week, open_time, close_time, active").order("day_of_week"),
+        supabase.from("services").select("id, name, description, duration, price").eq("active", true).order("sort_order"),
+        supabase.from("courses").select("*").eq("active", true).order("date"),
+        supabase.from("course_registrations").select("course_id").eq("status", "confirmed"),
+        supabase.from("gallery_images").select("id, url, alt, category").eq("active", true).order("sort_order").limit(12),
+        supabase
+          .from("reviews")
+          .select("id, rating, comment, created_at, clients(name)")
+          .eq("public", true)
+          .eq("approved", true)
+          .order("created_at", { ascending: false })
+          .limit(6),
+        supabase.from("reviews").select("rating").eq("public", true).eq("approved", true),
+      ]);
 
-    // Process settings
-    let settings = null;
-    if (settingsRes.data) {
-      const settingsMap: Record<string, string> = {};
-      settingsRes.data.forEach((s: { key: string; value: string }) => {
-        settingsMap[s.key] = s.value;
-      });
-      settings = {
-        businessName: settingsMap.business_name,
-        heroTitle: settingsMap.hero_title,
-        heroSubtitle: settingsMap.hero_subtitle,
-        aboutName: settingsMap.about_name,
-        aboutText: settingsMap.about_text,
-        aboutYears: settingsMap.about_years,
-        aboutClients: settingsMap.about_clients,
-        aboutGraduates: settingsMap.about_graduates,
-      };
-    }
+    // Settings map → typed site info
+    const map: Record<string, string> = {};
+    settingsRes.data?.forEach((s: { key: string; value: string }) => {
+      map[s.key] = s.value;
+    });
 
-    // Process courses with enrollment counts
+    const settings: SiteInfo = {
+      businessName: map.business_name,
+      heroTitle: map.hero_title,
+      heroSubtitle: map.hero_subtitle,
+      aboutName: map.about_name,
+      aboutText: map.about_text,
+      aboutYears: map.about_years,
+      aboutClients: map.about_clients,
+      aboutGraduates: map.about_graduates,
+      phone: map.phone,
+      address: map.address,
+      whatsapp: map.whatsapp || map.phone,
+      instagram: map.instagram,
+      facebook: map.facebook,
+      tiktok: map.tiktok,
+      operatingHours: (hoursRes.data || []).map((h) => ({
+        dayOfWeek: h.day_of_week,
+        openTime: h.open_time,
+        closeTime: h.close_time,
+        active: h.active,
+      })),
+    };
+
+    // Courses with confirmed enrollment counts
     const enrollmentMap: Record<string, number> = {};
     registrationsRes.data?.forEach((reg: { course_id: string }) => {
       enrollmentMap[reg.course_id] = (enrollmentMap[reg.course_id] || 0) + 1;
     });
 
-    const coursesWithEnrollment = coursesRes.data?.map((course) => ({
-      ...course,
+    const courses: CourseItem[] = (coursesRes.data || []).map((course) => ({
+      id: course.id,
+      name: course.name,
+      description: course.description,
+      date: course.date,
+      duration: course.duration,
+      price: course.price,
+      capacity: Number(course.capacity) || 0,
       enrolled: enrollmentMap[course.id] || 0,
-      capacity: course.max_participants || 10,
-    })) || [];
-
-    // Process gallery
-    const gallery = galleryRes.data?.map((img) => ({
-      id: img.id,
-      url: img.image_url,
-      alt: img.title || img.description,
-      sort_order: 0,
-    })) || [];
-
-    // Process reviews with average rating
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const reviews = (reviewsRes.data || []).map((r: any) => ({
-      id: r.id,
-      rating: r.rating,
-      comment: r.comment,
-      name: r.clients?.name || "לקוחה",
-      date: r.created_at,
+      location: course.location ?? null,
+      schedule_info: course.schedule_info ?? null,
     }));
 
-    const averageRating = reviews.length > 0
-      ? reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / reviews.length
-      : 0;
+    const gallery: GalleryImage[] = (galleryRes.data || []).map((img) => ({
+      id: img.id,
+      url: img.url,
+      alt: img.alt,
+      category: img.category ?? null,
+    }));
+
+    // Reviews: show first names only, average across every approved review
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reviewItems = (reviewsRes.data || []).map((r: any) => {
+      const fullName: string = r.clients?.name || "";
+      return {
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment,
+        name: fullName ? fullName.split(" ")[0] : "לקוחה",
+        date: r.created_at,
+      };
+    });
+
+    const allRatings = (ratingsRes.data || []).map((r: { rating: number }) => r.rating);
+    const averageRating =
+      allRatings.length > 0 ? allRatings.reduce((sum, r) => sum + r, 0) / allRatings.length : 0;
 
     return {
       settings,
       services: servicesRes.data || [],
-      courses: coursesWithEnrollment,
+      courses,
       gallery,
-      reviews: { reviews, averageRating },
+      reviews: {
+        reviews: reviewItems,
+        averageRating: Math.round(averageRating * 10) / 10,
+        totalReviews: allRatings.length,
+      },
     };
   } catch (error) {
     console.error("Error fetching page data:", error);
-    return { settings: null, services: [], courses: [], gallery: [], reviews: { reviews: [], averageRating: 0 } };
+    return EMPTY;
   }
 }
 
 export default async function Home() {
   const { settings, services, courses, gallery, reviews } = await getPageData();
 
+  const rating = { average: reviews.averageRating, count: reviews.totalReviews };
+  const heroImages = gallery.slice(0, 3);
+  const galleryImages = gallery.slice(0, 8);
+  const aboutImages = gallery.length > 4 ? gallery.slice(3, 5) : gallery.slice(0, 2);
+  const ctaImage = gallery[gallery.length > 5 ? 5 : 0];
+
   return (
-    <main>
-      <Hero settings={settings || undefined} />
-      <AppPromotion />
-      <MyBookingsWidget />
-      <Reviews initialData={reviews} />
-      <Services initialServices={services} />
-      <Courses initialCourses={courses} />
-      <Gallery initialImages={gallery} />
-      <About settings={settings || undefined} />
-      <Contact />
-      <Footer />
-    </main>
+    <>
+      <Header businessName={settings.businessName} />
+      <main id="main">
+        <Hero settings={settings} images={heroImages} rating={rating} />
+        <TrustBar
+          rating={rating}
+          years={settings.aboutYears}
+          clients={settings.aboutClients}
+          graduates={settings.aboutGraduates}
+        />
+        <MyBookingsWidget />
+        <Services initialServices={services} />
+        <Gallery initialImages={galleryImages} />
+        <Reviews initialData={reviews} />
+        <Courses initialCourses={courses} />
+        <About settings={settings} images={aboutImages} />
+        <AppPromotion />
+        <Contact initialSettings={settings} />
+        <CTASection image={ctaImage} whatsapp={settings.whatsapp} />
+      </main>
+      <Footer settings={settings} />
+    </>
   );
 }
