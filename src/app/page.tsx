@@ -1,4 +1,5 @@
 import Hero from "@/components/landing/Hero";
+import AppPromotion from "@/components/landing/AppPromotion";
 import Services from "@/components/landing/Services";
 import MyBookingsWidget from "@/components/ui/MyBookingsWidget";
 import Courses from "@/components/landing/Courses";
@@ -101,6 +102,7 @@ export default async function Home() {
   return (
     <main>
       <Hero settings={settings || undefined} />
+      <AppPromotion />
       <MyBookingsWidget />
       <Reviews initialData={reviews} />
       <Services initialServices={services} />
