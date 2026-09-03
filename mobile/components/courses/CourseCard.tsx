@@ -12,6 +12,7 @@ import type { Course, GalleryImage } from '../../lib/api';
 import { COURSE_STATUS_LABEL, CourseStatus, formatCourseDate, spotsLeft } from '../../lib/courses';
 import { formatPrice, LRM } from '../../lib/format';
 import { colors, radius, spacing, typography } from '../../lib/theme';
+import { brandNailImage } from '../../lib/brand';
 
 export interface CourseCardProps {
     course: Course;
@@ -50,7 +51,7 @@ export function CourseCard({ course, status, registered, image, onOpen, onRegist
             accessibilityLabel={`${course.name}, ${COURSE_STATUS_LABEL[status]}, ${formatPrice(course.price)}`}
             style={[styles.card, isPast ? styles.cardPast : null]}
         >
-            <ImageTile uri={image?.image_url} decorative aspectRatio={16 / 9} borderRadius={radius.md} scrim="bottom" style={styles.image}>
+            <ImageTile uri={image?.image_url} source={brandNailImage(course.id)} decorative aspectRatio={16 / 9} borderRadius={radius.md} scrim="bottom" style={styles.image}>
                 <View style={styles.imageTop}>
                     <Badge label={registered ? 'נרשמת' : COURSE_STATUS_LABEL[status]} tone={registered ? 'rose' : TONE[status]} />
                     <PolishDot seed={course.id} size={20} />

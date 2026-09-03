@@ -8,6 +8,7 @@ import type { GalleryImage, OperatingHour } from '../../lib/api';
 import { getTodayHours } from '../../lib/hours';
 import { a11yButton } from '../../lib/a11y';
 import { LRM } from '../../lib/format';
+import { BRAND_IMAGES } from '../../lib/brand';
 import { colors, radius, spacing, typography } from '../../lib/theme';
 
 interface HeroCardProps {
@@ -24,7 +25,7 @@ export function HeroCard({ name, image, businessName, operatingHours, onProfile 
     const initial = (name || businessName).trim().charAt(0);
 
     return (
-        <ImageTile uri={image?.image_url} alt={image?.title || undefined} decorative borderRadius={radius.xl} scrim="full" style={styles.hero}>
+        <ImageTile uri={image?.image_url} source={BRAND_IMAGES.hero} alt={image?.title || undefined} decorative borderRadius={radius.xl} scrim="full" style={styles.hero}>
             <View style={styles.topRow}>
                 <View style={styles.brand}>
                     <AppText variant="eyebrow" style={styles.brandText}>{businessName} · nail artist</AppText>

@@ -17,6 +17,20 @@ import type { CourseItem, GalleryImage, ReviewSummary, ServiceItem, SiteInfo } f
 // Refresh landing data every minute without blocking the request path
 export const revalidate = 60;
 
+const brand = (id: string, file: string, alt: string): GalleryImage => ({ id, url: `/images/brand/${file}`, alt });
+const BRAND = {
+  hero: [
+    brand("brand-hero-1", "nails-1.jpg", "מניקור בגוון ניוד עם אצבע כרום"),
+    brand("brand-hero-2", "nails-2.jpg", "מניקור צרפתי עדין"),
+    brand("brand-hero-3", "nails-3.jpg", "ציפורניים שקדיות בגוון ורוד עדין"),
+  ],
+  about: [
+    brand("brand-about-1", "salon-2.jpg", "חלל הסלון"),
+    brand("brand-about-2", "work-1.jpg", "עבודת ציפורניים מהסטודיו"),
+  ],
+  cta: brand("brand-cta", "work-2.jpg", ""),
+};
+
 interface PageData {
   settings: SiteInfo;
   services: ServiceItem[];
@@ -148,10 +162,12 @@ export default async function Home() {
   const { settings, services, courses, gallery, reviews } = await getPageData();
 
   const rating = { average: reviews.averageRating, count: reviews.totalReviews };
-  const heroImages = gallery.slice(0, 3);
+  // Brand photography used until the gallery has uploads of its own
+  const hasGallery = gallery.length > 0;
+  const heroImages = hasGallery ? gallery.slice(0, 3) : BRAND.hero;
   const galleryImages = gallery.slice(0, 8);
-  const aboutImages = gallery.length > 4 ? gallery.slice(3, 5) : gallery.slice(0, 2);
-  const ctaImage = gallery[gallery.length > 5 ? 5 : 0];
+  const aboutImages = gallery.length > 4 ? gallery.slice(3, 5) : hasGallery ? gallery.slice(0, 2) : BRAND.about;
+  const ctaImage = hasGallery ? gallery[gallery.length > 5 ? 5 : 0] : BRAND.cta;
 
   return (
     <>

@@ -90,7 +90,6 @@ export default function HomeScreen() {
                 <Animated.View entering={enter(0, reduced)}>
                     <HeroCard
                         name={clientName}
-                        image={gallery[0] || null}
                         businessName={businessName}
                         operatingHours={settings.operatingHours}
                         onProfile={() => router.push('/profile')}

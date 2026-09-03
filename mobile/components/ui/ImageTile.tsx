@@ -1,12 +1,14 @@
 // ImageTile – expo-image with a cream placeholder, fade transition and a11y label.
+// Accepts a remote `uri` or a bundled `source` (require) — the former wins when both are given.
 import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { Image, ImageContentFit } from 'expo-image';
+import { Image, ImageContentFit, ImageSource } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, motion, radius } from '../../lib/theme';
 
 export interface ImageTileProps {
     uri?: string | null;
+    source?: number | ImageSource | null;
     alt?: string;
     aspectRatio?: number;
     borderRadius?: number;
@@ -21,6 +23,7 @@ export interface ImageTileProps {
 
 export function ImageTile({
     uri,
+    source,
     alt,
     aspectRatio,
     borderRadius = radius.md,
@@ -32,6 +35,8 @@ export function ImageTile({
     scrim = 'none',
     children,
 }: ImageTileProps) {
+    const resolved = uri ? { uri } : source || null;
+
     return (
         <View
             style={[styles.wrap, { borderRadius, aspectRatio }, style]}
@@ -40,15 +45,15 @@ export function ImageTile({
             accessibilityLabel={!decorative ? alt : undefined}
             importantForAccessibility={decorative ? 'no-hide-descendants' : 'auto'}
         >
-            {uri ? (
+            {resolved ? (
                 <Image
-                    source={{ uri }}
+                    source={resolved}
                     style={StyleSheet.absoluteFill}
                     contentFit={contentFit}
                     transition={motion.base}
                     cachePolicy="memory-disk"
                     priority={priority}
-                    recyclingKey={recyclingKey || uri}
+                    recyclingKey={recyclingKey || uri || undefined}
                     placeholderContentFit="cover"
                 />
             ) : (

@@ -47,3 +47,7 @@ mobile/node_modules
 mobile/.expo
 mobile/ios
 mobile/android
+
+# raw brand source files (derivatives live in public/images/brand and mobile/assets)
+assests/
+assests.zip

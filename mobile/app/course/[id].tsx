@@ -23,6 +23,7 @@ import { COURSE_STATUS_LABEL, formatCourseDate, getCourseStatus, spotsLeft } fro
 import { openMaps, openUrl } from '../../lib/contact';
 import { formatPrice, LRM } from '../../lib/format';
 import { enter, useReducedMotion } from '../../lib/motion';
+import { brandNailImage } from '../../lib/brand';
 import { colors, radius, spacing, typography } from '../../lib/theme';
 
 export default function CourseDetailScreen() {
@@ -106,7 +107,7 @@ export default function CourseDetailScreen() {
             }
         >
             <Animated.View entering={enter(0, reduced)} style={styles.heroWrap}>
-                <ImageTile uri={image?.image_url} decorative aspectRatio={4 / 3} borderRadius={radius.xl} scrim="full" style={styles.hero}>
+                <ImageTile uri={image?.image_url} source={brandNailImage(course.id)} decorative aspectRatio={4 / 3} borderRadius={radius.xl} scrim="full" style={styles.hero}>
                     <View style={styles.heroTop}>
                         <Badge label={registered ? 'נרשמת' : COURSE_STATUS_LABEL[status!]} tone={registered ? 'rose' : status === 'upcoming' ? 'success' : status === 'limited' ? 'warning' : 'neutral'} />
                     </View>

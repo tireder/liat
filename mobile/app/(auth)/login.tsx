@@ -11,7 +11,9 @@ import { otpApi } from '../../lib/api';
 import { useAppData } from '../../lib/appData';
 import { maskPhoneInput } from '../../lib/format';
 import { enter, useReducedMotion } from '../../lib/motion';
-import { colors, spacing } from '../../lib/theme';
+import { colors, radius, spacing } from '../../lib/theme';
+import { ImageTile } from '../../components/ui/ImageTile';
+import { BRAND_IMAGES } from '../../lib/brand';
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -57,6 +59,7 @@ export default function LoginScreen() {
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
                 <View style={styles.content}>
                     <Animated.View entering={enter(0, reduced)} style={styles.brand}>
+                        <ImageTile source={BRAND_IMAGES.logo} decorative borderRadius={radius.lg} style={styles.logo} />
                         <AppText variant="display-xl" align="center" style={styles.wordmark}>
                             {businessName}
                         </AppText>
@@ -129,6 +132,11 @@ const styles = StyleSheet.create({
     brand: {
         alignItems: 'center',
         gap: 2,
+    },
+    logo: {
+        width: 88,
+        height: 88,
+        marginBottom: spacing.md,
     },
     wordmark: {
         fontSize: 48,

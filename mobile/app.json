@@ -29,7 +29,7 @@
       "package": "art.liatnails.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#fbf8f5"
+        "backgroundColor": "#fde9df"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -66,9 +66,8 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "imageWidth": 160,
-          "resizeMode": "contain",
-          "backgroundColor": "#fbf8f5"
+          "resizeMode": "cover",
+          "backgroundColor": "#fbded5"
         }
       ],
       [
