@@ -1,12 +1,10 @@
-// RatingArc – the average rating as five stars laid along an arch, each star
-// filled to its exact fraction, with the score in serif under the crown.
-// Read-only; the review count only goes into the accessibility label.
+// RatingArc – the average rating as five stars on a gentle arc, each star
+// filled to its exact fraction. Read-only; the score and review count only
+// go into the accessibility label.
 import React, { useId } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
-import { AppText } from '../AppText';
-import { LRM } from '../../lib/format';
-import { colors, typography } from '../../lib/theme';
+import { colors } from '../../lib/theme';
 
 export interface RatingArcProps {
     rating: number;
@@ -17,8 +15,8 @@ export interface RatingArcProps {
 }
 
 const STAR_COUNT = 5;
-/** Half of the angular spread of the arch, in degrees */
-const HALF_SPREAD = 44;
+/** Half of the angular spread of the arc, in degrees (small = gentle curve) */
+const HALF_SPREAD = 18;
 
 /** Five-point star centred on 0,0 with outer radius r */
 function starPath(r: number): string {
@@ -32,19 +30,16 @@ function starPath(r: number): string {
     return `M${pts.join('L')}Z`;
 }
 
-export function RatingArc({ rating, count, width = 208, style }: RatingArcProps) {
+export function RatingArc({ rating, count, width = 132, style }: RatingArcProps) {
     const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
     const value = Math.max(0, Math.min(STAR_COUNT, rating));
 
-    const starR = width * 0.062; // outer radius of a star
-    const radius = width * 0.58; // arch radius
+    const starR = width * 0.082; // outer radius of a star
+    // Chord across the arc spans the full width, so the radius follows from the spread
+    const radius = (width - starR * 2) / (2 * Math.sin((HALF_SPREAD * Math.PI) / 180));
     const cx = width / 2;
-    const cy = radius + starR + 2; // arch centre sits below the drawing
-    const height = Math.ceil(cy - radius * Math.sin(((90 - HALF_SPREAD) * Math.PI) / 180) + starR + 2);
-    const scoreTop = starR * 2.1;
-    const scoreSize = width * 0.2;
-    // The score hangs below the arch, so the block must be tall enough for it
-    const blockHeight = Math.ceil(Math.max(height, scoreTop + scoreSize * 1.1 + 18));
+    const cy = radius + starR + 1; // arc centre sits below the drawing
+    const height = Math.ceil(cy - radius * Math.sin(((90 - HALF_SPREAD) * Math.PI) / 180) + starR + 1);
     const d = starPath(starR);
 
     // RTL: star 1 is on the right (angle < 90°), star 5 on the left
@@ -61,7 +56,7 @@ export function RatingArc({ rating, count, width = 208, style }: RatingArcProps)
     const label = `דירוג ממוצע ${value.toFixed(1)} מתוך 5${count ? `, על סמך ${count} ביקורות` : ''}`;
 
     return (
-        <View style={[styles.wrap, { width, height: blockHeight }, style]} accessible accessibilityRole="image" accessibilityLabel={label}>
+        <View style={[styles.wrap, { width, height }, style]} accessible accessibilityRole="image" accessibilityLabel={label}>
             <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
                 <Defs>
                     {stars.map((s) => (
@@ -78,14 +73,6 @@ export function RatingArc({ rating, count, width = 208, style }: RatingArcProps)
                     </G>
                 ))}
             </Svg>
-            <View style={[styles.score, { top: scoreTop }]} pointerEvents="none">
-                <AppText style={[styles.scoreText, { fontSize: scoreSize, lineHeight: scoreSize * 1.1 }]} maxFontSizeMultiplier={1.1}>
-                    {LRM}{value.toFixed(1)}{LRM}
-                </AppText>
-                <AppText variant="eyebrow" tone="soft" style={styles.outOf} maxFontSizeMultiplier={1.1}>
-                    מתוך {LRM}5{LRM}
-                </AppText>
-            </View>
         </View>
     );
 }
@@ -94,22 +81,6 @@ const styles = StyleSheet.create({
     wrap: {
         alignSelf: 'center',
         alignItems: 'center',
-    },
-    score: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-    },
-    scoreText: {
-        fontFamily: typography.fontFamily.display,
-        color: colors.ink,
-        textAlign: 'center',
-        writingDirection: 'ltr',
-    },
-    outOf: {
-        marginTop: -2,
-        textTransform: 'uppercase',
     },
 });
 
