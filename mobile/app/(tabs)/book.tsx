@@ -17,6 +17,7 @@ import { NotesStep } from '../../components/booking/NotesStep';
 import { ConfirmStep } from '../../components/booking/ConfirmStep';
 import { STEP_LABEL, useBookingWizard } from '../../components/booking/useBookingWizard';
 import { SuccessOverlay } from '../../components/feedback/SuccessOverlay';
+import { formatDateLong, formatTimeRange } from '../../lib/format';
 import { useToast } from '../../components/feedback/Toast';
 import { useContactSheet } from '../../components/feedback/ContactSheet';
 import { useAuth } from '../../lib/auth';
@@ -255,6 +256,15 @@ export default function BookScreen() {
                     success?.pending
                         ? 'הסלון יאשר את המועד החדש ותקבלי הודעה.'
                         : 'שלחנו לך SMS עם כל הפרטים. נתראה בסלון.'
+                }
+                highlight={
+                    state.date && state.time
+                        ? {
+                              label: success?.pending ? 'המועד המבוקש' : 'נתראה ב',
+                              value: formatDateLong(state.date),
+                              caption: `${formatTimeRange(state.time)}${state.service ? ` · ${state.service.name}` : ''}`,
+                          }
+                        : undefined
                 }
                 primaryAction={{ label: 'לתורים שלי', onPress: () => finish('/(tabs)/account') }}
                 secondaryAction={{ label: 'הוסיפי ליומן', onPress: handleCalendarFromSuccess }}
