@@ -146,7 +146,7 @@ export default function RootLayout() {
                             <SheetProvider>
                                 <SplashGate fontsReady={fontsReady} />
                                 <NotificationAndDeepLinkHandler />
-                                <StatusBar style="dark" backgroundColor={colors.bg} />
+                                <StatusBar style="dark" />
                                 <Stack
                                     screenOptions={{
                                         headerShown: false,

@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "scheme": "liat-nails",
     "ios": {
       "supportsTablet": true,
@@ -19,7 +18,9 @@
         "applinks:www.liat-nails.art"
       ],
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"],
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
         "NSCalendarsUsageDescription": "כדי להוסיף את התור שלך ליומן המכשיר",
         "NSCalendarsFullAccessUsageDescription": "כדי להוסיף את התור שלך ליומן המכשיר",
         "NSCalendarsWriteOnlyAccessUsageDescription": "כדי להוסיף את התור שלך ליומן המכשיר"
@@ -31,7 +32,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#fde9df"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "pan",
       "intentFilters": [
@@ -39,18 +39,61 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/my-bookings" },
-            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/review" },
-            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/book" },
-            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/courses" },
-            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/gallery" },
-            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/my-bookings" },
-            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/review" },
-            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/book" },
-            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/courses" },
-            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/gallery" }
+            {
+              "scheme": "https",
+              "host": "liat-nails.art",
+              "pathPrefix": "/my-bookings"
+            },
+            {
+              "scheme": "https",
+              "host": "liat-nails.art",
+              "pathPrefix": "/review"
+            },
+            {
+              "scheme": "https",
+              "host": "liat-nails.art",
+              "pathPrefix": "/book"
+            },
+            {
+              "scheme": "https",
+              "host": "liat-nails.art",
+              "pathPrefix": "/courses"
+            },
+            {
+              "scheme": "https",
+              "host": "liat-nails.art",
+              "pathPrefix": "/gallery"
+            },
+            {
+              "scheme": "https",
+              "host": "www.liat-nails.art",
+              "pathPrefix": "/my-bookings"
+            },
+            {
+              "scheme": "https",
+              "host": "www.liat-nails.art",
+              "pathPrefix": "/review"
+            },
+            {
+              "scheme": "https",
+              "host": "www.liat-nails.art",
+              "pathPrefix": "/book"
+            },
+            {
+              "scheme": "https",
+              "host": "www.liat-nails.art",
+              "pathPrefix": "/courses"
+            },
+            {
+              "scheme": "https",
+              "host": "www.liat-nails.art",
+              "pathPrefix": "/gallery"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -84,7 +127,9 @@
           "defaultChannel": "default",
           "sounds": []
         }
-      ]
+      ],
+      "expo-image",
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {
