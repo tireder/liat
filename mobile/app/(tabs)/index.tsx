@@ -18,13 +18,12 @@ import { CoursesRail } from '../../components/home/CoursesRail';
 import { NotificationsSoftAsk } from '../../components/home/NotificationsSoftAsk';
 import { AppointmentTicket } from '../../components/booking/AppointmentTicket';
 import { useBookingActions } from '../../components/booking/useBookingActions';
-import { StarRating } from '../../components/StarRating';
+import { RatingArc } from '../../components/home/RatingArc';
 import { useAuth } from '../../lib/auth';
 import { useAppData } from '../../lib/appData';
 import { getLastCompleted, getNextBooking } from '../../lib/booking';
 import { splitCourses } from '../../lib/courses';
 import { enter, useReducedMotion } from '../../lib/motion';
-import { LRM } from '../../lib/format';
 import { colors, spacing } from '../../lib/theme';
 
 export default function HomeScreen() {
@@ -149,10 +148,7 @@ export default function HomeScreen() {
 
                 {hasRating ? (
                     <Animated.View entering={enter(3, reduced)} style={styles.proof}>
-                        <StarRating rating={reviewSummary!.averageRating} size={14} />
-                        <AppText variant="body-sm" tone="muted">
-                            {LRM}{reviewSummary!.averageRating.toFixed(1)}{LRM} · {LRM}{reviewSummary!.totalReviews}{LRM} ביקורות של לקוחות
-                        </AppText>
+                        <RatingArc rating={reviewSummary!.averageRating} count={reviewSummary!.totalReviews} />
                     </Animated.View>
                 ) : null}
 
@@ -213,10 +209,8 @@ const styles = StyleSheet.create({
         gap: spacing.xl,
     },
     proof: {
-        flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.sm,
-        alignSelf: 'flex-start',
+        paddingVertical: spacing.sm,
     },
     section: {
         gap: spacing.xs,

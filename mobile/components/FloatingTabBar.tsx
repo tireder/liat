@@ -45,6 +45,11 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
     const [layouts, setLayouts] = useState<Record<number, TabLayout>>({});
     const layoutsRef = useRef(layouts);
     layoutsRef.current = layouts;
+    // Mirror for the gesture worklet (a ref must not be captured by a worklet)
+    const layoutsSV = useSharedValue<Record<number, TabLayout>>({});
+    useEffect(() => {
+        layoutsSV.value = layouts;
+    }, [layouts, layoutsSV]);
 
     const pillX = useSharedValue(0);
     const pillW = useSharedValue(0);
@@ -121,7 +126,7 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
             dragging.value = 1;
         })
         .onUpdate((e) => {
-            const base = layoutsRef.current[activeIndex];
+            const base = layoutsSV.value[activeIndex];
             if (!base) return;
             pillX.value = base.x + 4 + e.translationX;
         })
