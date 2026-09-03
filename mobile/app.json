@@ -1,0 +1,99 @@
+{
+  "expo": {
+    "name": "ליאת",
+    "slug": "liat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "liat-nails",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "art.liat-nails.app",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "associatedDomains": [
+        "applinks:liat-nails.art",
+        "applinks:www.liat-nails.art"
+      ],
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"],
+        "NSCalendarsUsageDescription": "כדי להוסיף את התור שלך ליומן המכשיר",
+        "NSCalendarsFullAccessUsageDescription": "כדי להוסיף את התור שלך ליומן המכשיר",
+        "NSCalendarsWriteOnlyAccessUsageDescription": "כדי להוסיף את התור שלך ליומן המכשיר"
+      }
+    },
+    "android": {
+      "package": "art.liatnails.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#fbf8f5"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "pan",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/my-bookings" },
+            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/review" },
+            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/book" },
+            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/courses" },
+            { "scheme": "https", "host": "liat-nails.art", "pathPrefix": "/gallery" },
+            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/my-bookings" },
+            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/review" },
+            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/book" },
+            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/courses" },
+            { "scheme": "https", "host": "www.liat-nails.art", "pathPrefix": "/gallery" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#fbf8f5"
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "כדי להוסיף את התור שלך ליומן המכשיר"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#c4908a",
+          "defaultChannel": "default",
+          "sounds": []
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d75007bf-63af-4352-b083-c235d6f06a8f"
+      }
+    },
+    "locales": {
+      "he": "./locales/he.json"
+    }
+  }
+}

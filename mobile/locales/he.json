@@ -1,0 +1,7 @@
+{
+  "CFBundleDisplayName": "ליאת",
+  "NSCalendarsUsageDescription": "כדי להוסיף את התור שלך ליומן המכשיר",
+  "NSCalendarsFullAccessUsageDescription": "כדי להוסיף את התור שלך ליומן המכשיר",
+  "NSCalendarsWriteOnlyAccessUsageDescription": "כדי להוסיף את התור שלך ליומן המכשיר",
+  "NSUserNotificationsUsageDescription": "כדי לשלוח לך תזכורות לתורים ועדכונים מהסלון"
+}
