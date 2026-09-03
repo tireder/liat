@@ -92,7 +92,7 @@ export default function HomeScreen() {
                         name={clientName}
                         businessName={businessName}
                         operatingHours={settings.operatingHours}
-                        onProfile={() => router.push('/profile')}
+                        onProfile={() => router.push('/(tabs)/account')}
                     />
                 </Animated.View>
 

@@ -21,12 +21,12 @@ export default function TabLayout() {
                 sceneStyle: { backgroundColor: colors.bg },
             }}
         >
-            {/* RTL order: first tab sits on the right */}
+            {/* Visual order is defined in FloatingTabBar: account · book · [home] · courses · gallery */}
             <Tabs.Screen name="index" />
             <Tabs.Screen name="book" />
+            <Tabs.Screen name="account" />
             <Tabs.Screen name="courses" />
             <Tabs.Screen name="gallery" />
-            <Tabs.Screen name="appointments" />
         </Tabs>
     );
 }

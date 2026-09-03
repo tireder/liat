@@ -1,4 +1,5 @@
-// Appointments – upcoming / past with tickets, sort sheet and in-app review entry
+// Account – the single personal area: identity, settings entry, and the
+// bookings list (upcoming / past) with tickets, sort sheet and in-app review entry
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -8,7 +9,7 @@ import { Header } from '../../components/ui/Header';
 import { Chip } from '../../components/ui/Chip';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PressableScale } from '../../components/ui/PressableScale';
-import { Icon } from '../../components/ui/Icon';
+import { Chevron, Icon } from '../../components/ui/Icon';
 import { AppText } from '../../components/AppText';
 import { AppointmentsSkeleton } from '../../components/SkeletonLoader';
 import { AppointmentTicket } from '../../components/booking/AppointmentTicket';
@@ -18,8 +19,9 @@ import { useAuth } from '../../lib/auth';
 import { useAppData } from '../../lib/appData';
 import { BookingSort, isUpcoming, sortBookings } from '../../lib/booking';
 import { a11yButton } from '../../lib/a11y';
+import { formatPhoneDisplay, LRM } from '../../lib/format';
 import { enter, useReducedMotion } from '../../lib/motion';
-import { colors, radius, spacing } from '../../lib/theme';
+import { colors, radius, spacing, typography } from '../../lib/theme';
 
 type Filter = 'upcoming' | 'past';
 
@@ -30,13 +32,15 @@ const SORT_LABEL: Record<BookingSort, string> = {
     status: 'לפי סטטוס',
 };
 
-export default function AppointmentsScreen() {
+export default function AccountScreen() {
     const router = useRouter();
     const reduced = useReducedMotion();
-    const { phone } = useAuth();
-    const { bookings, isBookingsLoading, refreshBookings, invalidateBookings } = useAppData();
+    const { phone, name } = useAuth();
+    const { bookings, isBookingsLoading, refreshBookings, invalidateBookings, clientName: appClientName } = useAppData();
     const actions = useBookingActions();
     const { present } = useSheet();
+
+    const clientName = appClientName || name || null;
 
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [filter, setFilter] = useState<Filter>('upcoming');
@@ -82,6 +86,8 @@ export default function AppointmentsScreen() {
         if (choice) setSortBy(choice as BookingSort);
     };
 
+    const openSettings = () => router.push('/settings');
+
     const loading = isBookingsLoading && bookings.length === 0;
 
     return (
@@ -92,19 +98,52 @@ export default function AppointmentsScreen() {
             header={
                 <View>
                     <Header
-                        title="התורים שלי"
+                        title="החשבון שלי"
                         showBack={false}
                         large
-                        eyebrow="היומן שלך"
+                        eyebrow="האזור האישי"
+                        left={
+                            <PressableScale onPress={openSettings} style={styles.iconBtn} {...a11yButton('הגדרות')}>
+                                <Icon name="settings-outline" size={18} tone="ink" />
+                            </PressableScale>
+                        }
                         right={
-                            <PressableScale onPress={chooseSort} style={styles.sortBtn} {...a11yButton('מיון')}>
+                            <PressableScale onPress={chooseSort} style={styles.iconBtn} {...a11yButton('מיון התורים')}>
                                 <Icon name="swap-vertical-outline" size={18} tone="ink" />
                             </PressableScale>
                         }
                     />
-                    <View style={styles.filters} accessibilityRole="tablist">
-                        <Chip label={`בקרוב${upcoming.length ? ` · ${upcoming.length}` : ''}`} selected={filter === 'upcoming'} onPress={() => setFilter('upcoming')} size="sm" />
-                        <Chip label={`עבר${past.length ? ` · ${past.length}` : ''}`} selected={filter === 'past'} onPress={() => setFilter('past')} size="sm" />
+
+                    <Animated.View entering={enter(0, reduced)} style={styles.identityWrap}>
+                        <PressableScale
+                            onPress={openSettings}
+                            haptic="selection"
+                            accessibilityRole="button"
+                            accessibilityLabel="הפרטים וההגדרות שלי"
+                            style={styles.identity}
+                        >
+                            <View style={styles.avatar}>
+                                <AppText style={styles.avatarText}>{(clientName || 'ל').trim().charAt(0)}</AppText>
+                            </View>
+                            <View style={styles.identityText}>
+                                <AppText variant="heading" numberOfLines={1}>{clientName || 'לקוחה'}</AppText>
+                                <AppText variant="body-sm" tone="muted" style={styles.phone}>{LRM}{formatPhoneDisplay(phone)}{LRM}</AppText>
+                            </View>
+                            <View style={styles.settingsHint}>
+                                <AppText variant="caption" tone="soft">הגדרות</AppText>
+                                <Chevron direction="forward" size={14} tone="soft" />
+                            </View>
+                        </PressableScale>
+                    </Animated.View>
+
+                    <View style={styles.listHeader}>
+                        <AppText variant="eyebrow" tone="roseDeep" style={styles.listEyebrow} accessibilityRole="header">
+                            התורים שלי
+                        </AppText>
+                        <View style={styles.filters} accessibilityRole="tablist">
+                            <Chip label={`בקרוב${upcoming.length ? ` · ${upcoming.length}` : ''}`} selected={filter === 'upcoming'} onPress={() => setFilter('upcoming')} size="sm" />
+                            <Chip label={`עבר${past.length ? ` · ${past.length}` : ''}`} selected={filter === 'past'} onPress={() => setFilter('past')} size="sm" />
+                        </View>
                     </View>
                 </View>
             }
@@ -127,7 +166,7 @@ export default function AppointmentsScreen() {
                     {list.map((b, i) => {
                         const up = filter === 'upcoming';
                         return (
-                            <Animated.View key={b.id} entering={enter(i, reduced)}>
+                            <Animated.View key={b.id} entering={enter(i + 1, reduced)}>
                                 <AppointmentTicket
                                     booking={b}
                                     upcoming={up}
@@ -153,7 +192,7 @@ export default function AppointmentsScreen() {
 }
 
 const styles = StyleSheet.create({
-    sortBtn: {
+    iconBtn: {
         width: 44,
         height: 44,
         borderRadius: 22,
@@ -163,11 +202,58 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    identityWrap: {
+        paddingHorizontal: spacing.lg,
+        paddingBottom: spacing.md,
+    },
+    identity: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.md,
+        padding: spacing.md,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.line,
+        backgroundColor: colors.card,
+    },
+    avatar: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: colors.ink,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    avatarText: {
+        fontFamily: typography.fontFamily.display,
+        fontSize: 24,
+        lineHeight: 30,
+        color: colors.inkInverse,
+    },
+    identityText: {
+        flex: 1,
+        gap: 2,
+    },
+    phone: {
+        writingDirection: 'ltr',
+        textAlign: 'right',
+    },
+    settingsHint: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 2,
+    },
+    listHeader: {
+        paddingHorizontal: spacing.lg,
+        paddingBottom: spacing.md,
+        gap: spacing.sm,
+    },
+    listEyebrow: {
+        textTransform: 'uppercase',
+    },
     filters: {
         flexDirection: 'row',
         gap: spacing.sm,
-        paddingHorizontal: spacing.lg,
-        paddingBottom: spacing.md,
     },
     list: {
         gap: spacing.md,

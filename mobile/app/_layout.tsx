@@ -36,7 +36,7 @@ function routeForUrl(url: string): string | null {
         const path = parsed.pathname;
         const params = parsed.searchParams;
 
-        if (path.startsWith('/my-bookings') || path.startsWith('/app/booking')) return '/(tabs)/appointments';
+        if (path.startsWith('/my-bookings') || path.startsWith('/app/booking')) return '/(tabs)/account';
         if (path.startsWith('/review/')) {
             const token = path.split('/review/')[1];
             return token ? `/review/${token}` : null;
@@ -86,7 +86,7 @@ function NotificationAndDeepLinkHandler() {
         const sub = addNotificationResponseListener((response) => {
             const data = response.notification.request.content.data;
             if (data?.deepLink) handleDeepLink(String(data.deepLink));
-            else if (data?.bookingId) router.push('/(tabs)/appointments');
+            else if (data?.bookingId) router.push('/(tabs)/account');
         });
         return () => sub.remove();
     }, [handleDeepLink, router]);
@@ -156,7 +156,7 @@ export default function RootLayout() {
                                 >
                                     <Stack.Screen name="(auth)" />
                                     <Stack.Screen name="(tabs)" />
-                                    <Stack.Screen name="profile" />
+                                    <Stack.Screen name="settings" />
                                     <Stack.Screen name="review/[token]" />
                                     <Stack.Screen name="course/[id]" />
                                     <Stack.Screen name="privacy-policy" />

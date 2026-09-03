@@ -1,4 +1,4 @@
-// Profile – identity, notifications, SMS preferences, text size, links, logout
+// Settings – notifications, SMS preferences, text size, links, logout (reached from the account tab)
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -23,20 +23,18 @@ import { useTextSize, TextSizeLevel, TEXT_SIZE_LABEL } from '../lib/textSize';
 import { registerForPushNotifications, unregisterPushNotifications, getPushPermissionState, PUSH_TOKEN_KEY } from '../lib/notifications';
 import { openAppSettings } from '../lib/contact';
 import { APP_VERSION } from '../lib/config';
-import { formatPhoneDisplay, LRM } from '../lib/format';
+import { LRM } from '../lib/format';
 import { enter, useReducedMotion } from '../lib/motion';
 import { colors, radius, spacing, typography } from '../lib/theme';
 
-export default function ProfileScreen() {
+export default function SettingsScreen() {
     const router = useRouter();
     const reduced = useReducedMotion();
-    const { phone, name, logout } = useAuth();
-    const { clientName: appClientName, invalidateBookings } = useAppData();
+    const { phone, logout } = useAuth();
+    const { invalidateBookings } = useAppData();
     const { confirm } = useSheet();
     const { show } = useToast();
     const { textSize, setTextSize } = useTextSize();
-
-    const clientName = appClientName || name || null;
 
     const [pushEnabled, setPushEnabled] = useState(false);
     const [smsMarketing, setSmsMarketing] = useState(true);
@@ -134,22 +132,12 @@ export default function ProfileScreen() {
     };
 
     return (
-        <Screen header={<Header title="הפרופיל שלי" />}>
-            <Animated.View entering={enter(0, reduced)} style={styles.identity}>
-                <View style={styles.avatar}>
-                    <AppText style={styles.avatarText}>{(clientName || 'ל').trim().charAt(0)}</AppText>
-                </View>
-                <View style={styles.identityText}>
-                    <AppText variant="display-sm" accessibilityRole="header">{clientName || 'לקוחה'}</AppText>
-                    <AppText variant="body-sm" tone="muted" style={styles.phone}>{LRM}{formatPhoneDisplay(phone)}{LRM}</AppText>
-                </View>
-            </Animated.View>
-
+        <Screen header={<Header title="הגדרות" />}>
             {loadingPrefs ? (
                 <ProfileSkeleton />
             ) : (
                 <>
-                    <Animated.View entering={enter(1, reduced)}>
+                    <Animated.View entering={enter(0, reduced)}>
                         <Card>
                             <SectionLabel>התראות</SectionLabel>
                             <SwitchRow
@@ -163,7 +151,7 @@ export default function ProfileScreen() {
                         </Card>
                     </Animated.View>
 
-                    <Animated.View entering={enter(2, reduced)}>
+                    <Animated.View entering={enter(1, reduced)}>
                         <Card>
                             <SectionLabel>הודעות SMS</SectionLabel>
                             <SwitchRow icon="megaphone-outline" title="עדכונים ומבצעים" description="הודעות שיווקיות מדי פעם" value={smsMarketing} onValueChange={(v) => handleToggleSms('sms_marketing', v)} />
@@ -176,7 +164,7 @@ export default function ProfileScreen() {
                 </>
             )}
 
-            <Animated.View entering={enter(3, reduced)}>
+            <Animated.View entering={enter(2, reduced)}>
                 <Card>
                     <SectionLabel>גודל טקסט</SectionLabel>
                     <View style={styles.sizes} accessibilityRole="radiogroup">
@@ -195,7 +183,7 @@ export default function ProfileScreen() {
                 </Card>
             </Animated.View>
 
-            <Animated.View entering={enter(4, reduced)}>
+            <Animated.View entering={enter(3, reduced)}>
                 <Card padding={spacing.sm}>
                     <LinkRow icon="help-circle-outline" label="עזרה ויצירת קשר" onPress={() => router.push('/help')} />
                     <LinkRow icon="document-text-outline" label="תנאי שימוש" onPress={() => router.push('/terms')} />
@@ -203,7 +191,7 @@ export default function ProfileScreen() {
                 </Card>
             </Animated.View>
 
-            <Animated.View entering={enter(5, reduced)} style={styles.logout}>
+            <Animated.View entering={enter(4, reduced)} style={styles.logout}>
                 <Button label="התנתקות" variant="danger" icon="log-out-outline" fullWidth onPress={handleLogout} haptic="selection" />
                 <AppText variant="caption" tone="soft" align="center">גרסה {LRM}{APP_VERSION}{LRM}</AppText>
             </Animated.View>
@@ -236,35 +224,6 @@ function LinkRow({ icon, label, onPress, last }: { icon: IconName; label: string
 }
 
 const styles = StyleSheet.create({
-    identity: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.lg,
-        paddingVertical: spacing.lg,
-        marginBottom: spacing.sm,
-    },
-    avatar: {
-        width: 68,
-        height: 68,
-        borderRadius: 34,
-        backgroundColor: colors.ink,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    avatarText: {
-        fontFamily: typography.fontFamily.display,
-        fontSize: 30,
-        lineHeight: 36,
-        color: colors.inkInverse,
-    },
-    identityText: {
-        flex: 1,
-        gap: 2,
-    },
-    phone: {
-        writingDirection: 'ltr',
-        textAlign: 'right',
-    },
     sectionLabel: {
         textTransform: 'uppercase',
         marginBottom: spacing.xs,

@@ -30,7 +30,7 @@ export function HeroCard({ name, image, businessName, operatingHours, onProfile 
                 <View style={styles.brand}>
                     <AppText variant="eyebrow" style={styles.brandText}>{businessName} · nail artist</AppText>
                 </View>
-                <PressableScale onPress={onProfile} style={styles.profile} {...a11yButton('הפרופיל שלי')}>
+                <PressableScale onPress={onProfile} style={styles.profile} {...a11yButton('החשבון שלי')}>
                     <AppText style={styles.profileInitial}>{initial}</AppText>
                 </PressableScale>
             </View>

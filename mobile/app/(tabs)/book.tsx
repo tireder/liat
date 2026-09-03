@@ -124,7 +124,7 @@ export default function BookScreen() {
         }
     };
 
-    const finish = (to: '/(tabs)' | '/(tabs)/appointments') => {
+    const finish = (to: '/(tabs)' | '/(tabs)/account') => {
         setSuccess(null);
         resetWizard();
         router.setParams({ reschedule: '', service: '' });
@@ -170,7 +170,7 @@ export default function BookScreen() {
                     <Header
                         title={title}
                         showBack={isReschedule}
-                        onBack={() => router.replace('/(tabs)/appointments')}
+                        onBack={() => router.replace('/(tabs)/account')}
                     />
                     {!loading ? <StepProgress labels={labels} index={state.stepIndex} /> : null}
                 </View>
@@ -200,7 +200,7 @@ export default function BookScreen() {
                 <View style={styles.missing}>
                     <AppText variant="display-sm" align="center">לא מצאנו את התור</AppText>
                     <AppText variant="body" tone="muted" align="center">ייתכן שהוא בוטל או שהקישור אינו תקף.</AppText>
-                    <Button label="לתורים שלי" onPress={() => router.replace('/(tabs)/appointments')} />
+                    <Button label="לתורים שלי" onPress={() => router.replace('/(tabs)/account')} />
                 </View>
             ) : (
                 <Animated.View key={`${state.initKey}-${currentStep}`} entering={FadeIn.duration(220)} exiting={FadeOut.duration(120)} style={styles.step}>
@@ -256,7 +256,7 @@ export default function BookScreen() {
                         ? 'הסלון יאשר את המועד החדש ותקבלי הודעה.'
                         : 'שלחנו לך SMS עם כל הפרטים. נתראה בסלון.'
                 }
-                primaryAction={{ label: 'לתורים שלי', onPress: () => finish('/(tabs)/appointments') }}
+                primaryAction={{ label: 'לתורים שלי', onPress: () => finish('/(tabs)/account') }}
                 secondaryAction={{ label: 'הוסיפי ליומן', onPress: handleCalendarFromSuccess }}
             />
         </Screen>
